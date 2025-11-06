@@ -14,6 +14,32 @@ const router = createRouter({
                     component: () => import('@/views/Dashboard.vue')
                 },
                 {
+                    path: '/Product/ProductList',
+                    name: 'ProductList',
+                    component: () => import('@/views/Product/ProductList.vue')
+                },
+                {
+                    path: 'Product/Add_Product', // không có dấu /
+                    name: 'Add_Product',
+                    component: () => import('@/views/Product/Add_Product.vue')
+                },
+                {
+                    path: 'Product/Edit_Product', // không có dấu /
+                    name: 'Edit_Product',
+                    component: () => import('@/views/Product/Edit_Product.vue')
+                },
+
+                {
+                    path: '/pages/auth/Login',
+                    name: 'Login',
+                    component: () => import('@/views/pages/auth/Login.vue')
+                },
+                   {
+                    path: '/pages/auth/Register',
+                    name: 'Register',
+                    component: () => import('@/views/pages/auth/Register.vue')
+                },
+                {
                     path: '/uikit/formlayout',
                     name: 'formlayout',
                     component: () => import('@/views/uikit/FormLayout.vue')
