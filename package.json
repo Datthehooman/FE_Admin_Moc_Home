@@ -10,6 +10,7 @@
     "dependencies": {
         "@primeuix/themes": "^1.0.0",
         "@tailwindcss/vite": "^4.1.16",
+        "@tanstack/vue-query": "^5.90.6",
         "axios": "^1.13.1",
         "chart.js": "3.3.2",
         "pinia": "^3.0.3",
