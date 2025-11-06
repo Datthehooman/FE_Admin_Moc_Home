@@ -1,4 +1,4 @@
-import { authApi } from '@/api';
+import authApi from '@/api/auth';
 import { defineStore } from 'pinia';
 
 export const useAuthStore = defineStore('auth', {
@@ -8,8 +8,6 @@ export const useAuthStore = defineStore('auth', {
             token: token || null,
             isAuthenticated: !!token,
             user: null,
-            userPermissions: null,
-            userRoles: null,
             userLoading: false
         };
     },
@@ -58,23 +56,23 @@ export const useAuthStore = defineStore('auth', {
             }
         }
     },
-    getters: {
-        hasPermission: (state) => (permission) => {
-            if (!state.userPermissions) return false;
-            return state.userPermissions.includes(permission);
-        },
-        hasRole: (state) => (role) => {
-            if (!state.userRoles) return false;
-            return state.userRoles.includes(role);
-        },
-        isSuperAdmin: (state) => {
-            if (!state.userRoles) return false;
-            return state.userRoles.includes('SUPER_ADMIN');
-        },
-        isAdmin: (state) => {
-            return state.user?.isAdministrator || false;
-        }
-    },
+    // getters: {
+    //     hasPermission: (state) => (permission) => {
+    //         if (!state.userPermissions) return false;
+    //         return state.userPermissions.includes(permission);
+    //     },
+    //     hasRole: (state) => (role) => {
+    //         if (!state.userRoles) return false;
+    //         return state.userRoles.includes(role);
+    //     },
+    //     isSuperAdmin: (state) => {
+    //         if (!state.userRoles) return false;
+    //         return state.userRoles.includes('SUPER_ADMIN');
+    //     },
+    //     isAdmin: (state) => {
+    //         return state.user?.isAdministrator || false;
+    //     }
+    // },
     persist: {
         enabled: true,
         strategies: [
