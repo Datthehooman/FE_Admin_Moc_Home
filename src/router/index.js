@@ -9,12 +9,12 @@ const router = createRouter({
             component: AppLayout,
             children: [
                 {
-                    path: '/',
+                    path: '',
                     name: 'dashboard',
                     component: () => import('@/views/Dashboard.vue')
                 },
                 {
-                    path: '/Product/ProductList',
+                    path: 'Product/ProductList',
                     name: 'ProductList',
                     component: () => import('@/views/Product/ProductList.vue')
                 },
@@ -23,10 +23,12 @@ const router = createRouter({
                     name: 'Add_Product',
                     component: () => import('@/views/Product/Add_Product.vue')
                 },
+
                 {
-                    path: 'Product/Edit_Product', // không có dấu /
-                    name: 'Edit_Product',
-                    component: () => import('@/views/Product/Edit_Product.vue')
+                path: 'Product/Edit_Product/:id',
+                name: 'Edit_Product',
+                component: () => import('@/views/Product/Edit_Product.vue'),
+                meta: { requiresAuth: true }
                 },
 
                 {

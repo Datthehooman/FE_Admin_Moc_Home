@@ -12,7 +12,8 @@ import InputIcon from "primevue/inputicon";
 
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
-
+import { useRouter } from 'vue-router';
+const router = useRouter();
 const products = ref([]);
 const filters = ref(null);
 const loading = ref(true);
@@ -72,7 +73,6 @@ const deleteProduct = async (product) => {
     }
 };
 </script>
-
 <template>
 <div class="card flex-1">
     <h2 class="font-semibold text-xl mb-4">Danh Sách Sản Phẩm</h2>
@@ -87,10 +87,10 @@ const deleteProduct = async (product) => {
         :loading="loading"
         :globalFilterFields="['product_name']"
         showGridlines
-        style="width: 100%"
-        tableStyle="min-width: 60rem"
         scrollable
         scrollHeight="500px"
+        rowHover
+        tableStyle="min-width: 60rem"
     >
         <template #header>
             <div class="flex justify-between items-center">
@@ -139,7 +139,12 @@ const deleteProduct = async (product) => {
         <Column header="Hành động" style="min-width: 10rem">
             <template #body="{ data }">
                 <div class="flex gap-2">
-                    <Button icon="pi pi-pencil" text severity="primary" />
+                    <Button
+                        icon="pi pi-pencil"
+                        text
+                        severity="primary"
+                        @click="router.push(`/Product/Edit_Product/${data.product_id}`)"
+                    />
                     <Button
                         icon="pi pi-trash"
                         text
@@ -154,15 +159,11 @@ const deleteProduct = async (product) => {
 </template>
 
 <style scoped lang="scss">
-:deep(.p-datatable-frozen-tbody) {
-    font-weight: bold;
+:deep(.p-datatable-scrollable .p-datatable-thead > tr > th),
+:deep(.p-datatable-scrollable .p-datatable-tbody > tr > td) {
+    white-space: nowrap;
 }
 
-:deep(.p-datatable-scrollable .p-frozen-column) {
-    font-weight: bold;
-}
-
-/* Đảm bảo bảng co giãn theo container */
 .card.flex-1 {
     width: 100%;
     display: flex;

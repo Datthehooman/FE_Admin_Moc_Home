@@ -65,7 +65,6 @@ const validateForm = () => {
   if (!productForm.price || isNaN(productForm.price) || Number(productForm.price) <= 0) errors.price = "Giá sản phẩm phải lớn hơn 0.";
   if (!productForm.status) errors.status = "Vui lòng chọn trạng thái.";
   if (!productForm.sku.trim()) errors.sku = "SKU không được để trống.";
-  if (!productForm.images.length) errors.images = "Vui lòng chọn ít nhất 1 hình ảnh.";
 
   // Nếu có bất cứ lỗi nào, return false
   return !Object.values(errors).some(e => e);
