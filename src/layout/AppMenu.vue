@@ -22,11 +22,6 @@ const model = ref([
                         label: 'Thêm sản phẩm',
                         icon: 'pi pi-fw pi-plus',
                         to: '/Product/Add_Product'
-                    },
-                       {
-                        label: 'Sửa sản phẩm',
-                        icon: 'pi pi-fw pi-plus',
-                        to: '/Product/Edit_Product'
                     }
                 ]
             },
