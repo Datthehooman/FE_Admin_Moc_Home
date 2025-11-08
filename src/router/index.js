@@ -30,7 +30,20 @@ const router = createRouter({
                 component: () => import('@/views/Product/Edit_Product.vue'),
                 meta: { requiresAuth: true }
                 },
-
+                  {
+                    path: 'Category/Categories',
+                    name: 'Categories',
+                    component: () => import('@/views/Category/Categories.vue')
+                },  {
+                    path: 'Category/Add_Category',
+                    name: 'Add_Category',
+                    component: () => import('@/views/Category/Add_Category.vue')
+                },
+                 {
+                    path: 'Category/Edit_Category/:id',
+                    name: 'Edit_Category',
+                    component: () => import('@/views/Category/Edit_Category.vue')
+                },
                 {
                     path: '/pages/auth/Login',
                     name: 'Login',
