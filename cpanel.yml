@@ -1,0 +1,15 @@
+deployment:
+    tasks:
+        - export DEPLOYPATH=/home/eal236bnt9pe/admin/
+
+        # Install Node dependencies
+        - /usr/bin/npm install
+
+        # Build admin project — adjust if using Vite, Nuxt, etc.
+        - /usr/bin/npm run build
+
+        # Clean old files except .git folder
+        - /bin/rm -rf ${DEPLOYPATH}*
+
+        # Copy dist build into document root
+        - /bin/cp -R dist/* ${DEPLOYPATH}
