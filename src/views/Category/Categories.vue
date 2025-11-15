@@ -28,7 +28,7 @@ onBeforeMount(async () => {
 async function loadCategories() {
     loading.value = true;
     try {
-        const response = await axios.get("http://127.0.0.1:8000/api/system/category/list", {
+        const response = await axios.get("http://api.mocfurni.shop/api/system/category/list", {
             headers: { Authorization: `Bearer ${authStore.token}` }
         });
         categories.value = response.data.result.data || [];
@@ -53,7 +53,7 @@ const deleteCategory = async (category) => {
     if (!confirm(`Bạn có chắc muốn xóa danh mục "${category.category_name}" không?`)) return;
 
     try {
-        await axios.delete(`http://127.0.0.1:8000/api/system/category/${category.id}`, {
+        await axios.delete(`http://api.mocfurni.shop/api/system/category/${category.id}`, {
             headers: { Authorization: `Bearer ${authStore.token}` }
         });
 

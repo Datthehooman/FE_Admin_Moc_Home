@@ -54,7 +54,7 @@ const submitForm = async () => {
     }
 
     const response = await axios.post(
-      'http://127.0.0.1:8000/api/system/category',
+      'http://api.mocfurni.shop/api/system/category',
       formData,
       {
         headers: {

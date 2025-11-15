@@ -1,4 +1,5 @@
 import AppLayout from '@/layout/AppLayout.vue';
+import { useAuthStore } from '@/stores/auth';
 import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
@@ -25,21 +26,22 @@ const router = createRouter({
                 },
 
                 {
-                path: 'Product/Edit_Product/:id',
-                name: 'Edit_Product',
-                component: () => import('@/views/Product/Edit_Product.vue'),
-                meta: { requiresAuth: true }
+                    path: 'Product/Edit_Product/:id',
+                    name: 'Edit_Product',
+                    component: () => import('@/views/Product/Edit_Product.vue'),
+                    meta: { requiresAuth: true }
                 },
-                  {
+                {
                     path: 'Category/Categories',
                     name: 'Categories',
                     component: () => import('@/views/Category/Categories.vue')
-                },  {
+                },
+                {
                     path: 'Category/Add_Category',
                     name: 'Add_Category',
                     component: () => import('@/views/Category/Add_Category.vue')
                 },
-                 {
+                {
                     path: 'Category/Edit_Category/:id',
                     name: 'Edit_Category',
                     component: () => import('@/views/Category/Edit_Category.vue')
@@ -49,7 +51,7 @@ const router = createRouter({
                     name: 'Login',
                     component: () => import('@/views/pages/auth/Login.vue')
                 },
-                   {
+                {
                     path: '/pages/auth/Register',
                     name: 'Register',
                     component: () => import('@/views/pages/auth/Register.vue')
@@ -174,6 +176,32 @@ const router = createRouter({
             component: () => import('@/views/pages/auth/Error.vue')
         }
     ]
+});
+
+router.beforeEach(async (to, from, next) => {
+    const auth = useAuthStore();
+
+    // Public routes that do NOT require login
+    const publicRoutes = ['login', 'Login', 'Register', 'landing', 'notfound'];
+    const isPublic = publicRoutes.includes(to.name);
+
+    // Not logged in → go to login
+    if (!auth.isAuthenticated && !isPublic) {
+        return next('/auth/login');
+    }
+
+    // If logged in but user info not loaded → fetch
+    if (auth.isAuthenticated && !auth.user) {
+        try {
+            await auth.fetchUser();
+        } catch (error) {
+            // Token expired or invalid → logout → redirect login
+            auth.clearAuth();
+            return next('/auth/login');
+        }
+    }
+
+    next();
 });
 
 export default router;

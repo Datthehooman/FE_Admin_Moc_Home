@@ -1,8 +1,8 @@
 <script setup>
 import FloatingConfigurator from '@/components/FloatingConfigurator.vue';
-import { ref } from 'vue';
+import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
-import { useAuthStore } from '@/stores/auth'
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const full_name = ref('');
@@ -22,23 +22,22 @@ const handleLogin = async () => {
     loading.value = true;
 
     try {
-        const response = await axios.post("http://127.0.0.1:8000/api/admin/login", {
+        const response = await axios.post('http://api.mocfurni.shop/api/admin/login', {
             full_name: full_name.value,
             password: password.value
         });
 
-        console.log("LOGIN SUCCESS:", response.data);
+        console.log('LOGIN SUCCESS:', response.data);
 
         // Lưu token vào store
         authStore.setToken(response.data.data.access_token);
         authStore.setUser(response.data.data.admin);
 
-        alert(response.data.message || "Đăng nhập thành công!");
+        alert(response.data.message || 'Đăng nhập thành công!');
         router.push('/'); // điều hướng đến trang chính
-
     } catch (error) {
-        console.error("LOGIN FAILED:", error.response?.data || error);
-        alert(error.response?.data?.message || "Đăng nhập thất bại!");
+        console.error('LOGIN FAILED:', error.response?.data || error);
+        alert(error.response?.data?.message || 'Đăng nhập thất bại!');
     } finally {
         loading.value = false;
     }

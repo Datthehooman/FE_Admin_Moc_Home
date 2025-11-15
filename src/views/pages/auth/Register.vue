@@ -1,7 +1,7 @@
 <script setup>
 import FloatingConfigurator from '@/components/FloatingConfigurator.vue';
-import { ref } from 'vue';
 import axios from 'axios';
+import { ref } from 'vue';
 
 const full_name = ref('');
 const email = ref('');
@@ -14,14 +14,14 @@ const loading = ref(false);
 const handleRegister = async () => {
     // Check confirm password
     if (password.value !== password_confirmation.value) {
-        alert("Mật khẩu xác nhận không khớp!");
+        alert('Mật khẩu xác nhận không khớp!');
         return;
     }
 
     loading.value = true;
 
     try {
-        const response = await axios.post("http://127.0.0.1:8000/api/admin/register", {
+        const response = await axios.post('http://api.mocfurni.shop/api/admin/register', {
             full_name: full_name.value,
             email: email.value,
             password: password.value,
@@ -29,17 +29,16 @@ const handleRegister = async () => {
             active: active.value
         });
 
-        console.log("REGISTER SUCCESS:", response.data);
-        alert(response.data.message || "Đăng ký thành công!");
+        console.log('REGISTER SUCCESS:', response.data);
+        alert(response.data.message || 'Đăng ký thành công!');
 
         // Nếu muốn lưu token tự login, có thể dùng:
         // localStorage.setItem("access_token", response.data.data.access_token);
 
-        window.location.href = "/pages/auth/Register";
-
+        window.location.href = '/pages/auth/Register';
     } catch (error) {
-        console.error("REGISTER FAILED:", error.response?.data || error);
-        alert(error.response?.data?.message || "Đăng ký thất bại!");
+        console.error('REGISTER FAILED:', error.response?.data || error);
+        alert(error.response?.data?.message || 'Đăng ký thất bại!');
     } finally {
         loading.value = false;
     }
@@ -77,7 +76,6 @@ const handleRegister = async () => {
                             <router-link to="/login" class="text-primary font-medium cursor-pointer">Sign In</router-link>
                         </p>
                     </div>
-
                 </div>
             </div>
         </div>

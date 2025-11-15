@@ -26,7 +26,7 @@ const loadCategory = async () => {
   loading.value = true;
   try {
     const res = await axios.get(
-      `http://127.0.0.1:8000/api/system/category/${categoryId}`,
+      `http://api.mocfurni.shop/api/system/category/${categoryId}`,
       { headers: { Authorization: `Bearer ${authStore.token}` } }
     );
     const c = res.data.result.data;
@@ -61,7 +61,7 @@ const submitForm = async () => {
     }
 
     await axios.post(
-      `http://127.0.0.1:8000/api/system/category/${categoryId}`,
+      `http://api.mocfurni.shop/api/system/category/${categoryId}`,
       formData,
       { headers: { Authorization: `Bearer ${authStore.token}`, "Content-Type": "multipart/form-data" } }
     );
