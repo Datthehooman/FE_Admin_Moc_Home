@@ -1,18 +1,20 @@
+---
 deployment:
     tasks:
-        - export DEPLOYPATH=/home/eal236bnt9pe/admin/
+        # Deployment path
+        - export DEPLOYPATH=/home/eal236bnt9pe/admin.mocfurni.shop
 
         # Navigate to repo folder (Git repo root)
         - cd $DEPLOYPATH
 
-        # Install Node dependencies
+        # Install Node dependencies (Node.js must be activated via cPanel)
         - npm install
 
-        # Build the project
+        # Build the Vue/Sakai project
         - npm run build
 
-        # Clean old files (except .git and .htaccess)
+        # Clean old files except .git and .htaccess
         - /bin/find $DEPLOYPATH -mindepth 1 -maxdepth 1 ! -name '.git' ! -name '.htaccess' -exec rm -rf {} +
 
-        # Copy build output into document root
+        # Copy build output to the deployment folder
         - /bin/cp -R dist/* $DEPLOYPATH
