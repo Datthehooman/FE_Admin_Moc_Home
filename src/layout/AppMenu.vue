@@ -18,17 +18,16 @@ const model = ref([
                         icon: 'pi pi-fw pi-box',
                         to: '/Product/ProductList'
                     },
-                     {
+                    {
                         label: 'Thêm sản phẩm',
                         icon: 'pi pi-fw pi-plus',
                         to: '/Product/Add_Product'
                     }
                 ]
-            },
-
+            }
         ]
     },
-   {
+    {
         items: [
             {
                 label: 'Danh Mục',
@@ -39,14 +38,13 @@ const model = ref([
                         icon: 'pi pi-fw pi-box',
                         to: '/Category/Categories'
                     },
-                     {
+                    {
                         label: 'Thêm sản danh mục',
                         icon: 'pi pi-fw pi-plus',
                         to: '/Category/Add_Category'
                     }
                 ]
-            },
-
+            }
         ]
     },
 
