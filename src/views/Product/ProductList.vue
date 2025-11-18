@@ -28,7 +28,7 @@ onBeforeMount(async () => {
 async function loadProducts() {
     loading.value = true;
     try {
-        const response = await axios.get('http://api.mocfurni.shop/api/system/products', {
+        const response = await axios.get('https://api.mocfurni.shop/api/system/products', {
             headers: { Authorization: `Bearer ${authStore.token}` }
         });
         products.value = response.data.result.data || [];
@@ -58,7 +58,7 @@ const deleteProduct = async (product) => {
     if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${product.product_name}" không?`)) return;
 
     try {
-        await axios.delete(`http://api.mocfurni.shop/api/system/products/${product.product_id}`, {
+        await axios.delete(`https://api.mocfurni.shop/api/system/products/${product.product_id}`, {
             headers: { Authorization: `Bearer ${authStore.token}` }
         });
 

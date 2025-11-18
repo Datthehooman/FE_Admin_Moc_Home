@@ -22,7 +22,7 @@ const handleLogin = async () => {
     loading.value = true;
 
     try {
-        const response = await axios.post('http://api.mocfurni.shop/api/admin/login', {
+        const response = await axios.post('https://api.mocfurni.shop/api/admin/login', {
             full_name: full_name.value,
             password: password.value
         });
