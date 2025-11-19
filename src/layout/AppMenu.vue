@@ -18,25 +18,36 @@ const model = ref([
                         icon: 'pi pi-fw pi-box',
                         to: '/Product/ProductList'
                     },
-                     {
+                    {
                         label: 'Thêm sản phẩm',
                         icon: 'pi pi-fw pi-plus',
                         to: '/Product/Add_Product'
-                    },
-                       {
-                        label: 'Sửa sản phẩm',
-                        icon: 'pi pi-fw pi-plus',
-                        to: '/Product/Edit_Product'
                     }
                 ]
-            },
-
+            }
+        ]
+    },
+    {
+        items: [
+            {
+                label: 'Danh Mục',
+                icon: 'pi pi-fw pi-tags',
+                items: [
+                    {
+                        label: 'Danh sách danh mục',
+                        icon: 'pi pi-fw pi-box',
+                        to: '/Category/Categories'
+                    },
+                    {
+                        label: 'Thêm sản danh mục',
+                        icon: 'pi pi-fw pi-plus',
+                        to: '/Category/Add_Category'
+                    }
+                ]
+            }
         ]
     },
 
-    {
-        items: [{ label: 'Danh Mục', icon: 'pi pi-fw pi-tags', to: '/Category/List' }]
-    },
     {
         items: [{ label: 'Đơn Hàng', icon: 'pi pi-fw pi-shopping-cart', to: '/Orders/List' }]
     },
