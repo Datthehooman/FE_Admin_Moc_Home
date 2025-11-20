@@ -27,7 +27,9 @@ async function loadOrders() {
     loading.value = true;
     try {
         const response = await apiClient.get('/order');
-        orders.value = response.data?.result?.data || [];
+
+        // Danh sách đơn hàng đúng cấu trúc
+        orders.value = response.data?.result?.data?.data || [];
     } catch (err) {
         console.error('Lỗi tải đơn hàng:', err);
         orders.value = [];
