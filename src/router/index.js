@@ -70,10 +70,15 @@ const router = createRouter({
                 //     name: 'Edit_Voucher',
                 //     component: () => import('@/views/Voucher/Edit_Voucher.vue')
                 // },
-                 {
+                {
                     path: 'Voucher/Edit_Voucher/:id',
                     name: 'Edit_Voucher',
                     component: () => import('@/views/Voucher/Edit_Voucher.vue')
+                },
+                {
+                    path: 'Order/List_Order',
+                    name: 'List_Order',
+                    component: () => import('@/views/Order/List_Order.vue')
                 },
                 {
                     path: '/uikit/formlayout',
