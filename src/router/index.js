@@ -57,6 +57,26 @@ const router = createRouter({
                     component: () => import('@/views/pages/auth/Register.vue')
                 },
                 {
+                    path: 'Voucher/List_Voucher',
+                    name: 'List_Voucher',
+                    component: () => import('@/views/Voucher/List_Voucher.vue')
+                },
+                {
+                    path: 'Voucher/Add_Voucher',
+                    name: 'Add_Voucher',
+                    component: () => import('@/views/Voucher/Add_Voucher.vue')
+                },
+                // {
+                //     path: 'Voucher/Edit_Voucher',
+                //     name: 'Edit_Voucher',
+                //     component: () => import('@/views/Voucher/Edit_Voucher.vue')
+                // },
+                 {
+                    path: 'Voucher/Edit_Voucher/:id',
+                    name: 'Edit_Voucher',
+                    component: () => import('@/views/Voucher/Edit_Voucher.vue')
+                },
+                {
                     path: '/uikit/formlayout',
                     name: 'formlayout',
                     component: () => import('@/views/uikit/FormLayout.vue')
@@ -149,6 +169,7 @@ const router = createRouter({
                 }
             ]
         },
+
         {
             path: '/landing',
             name: 'landing',

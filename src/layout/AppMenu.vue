@@ -47,7 +47,26 @@ const model = ref([
             }
         ]
     },
-
+  {
+        items: [
+            {
+                label: 'Mã giảm giá',
+                icon: 'pi pi-fw pi-tags',
+                items: [
+                    {
+                        label: 'Danh sách mã giảm giá',
+                        icon: 'pi pi-fw pi-box',
+                        to: '/Voucher/List_Voucher'
+                    },
+                    {
+                        label: 'Thêm sản mã giảm giá',
+                        icon: 'pi pi-fw pi-plus',
+                        to: '/Voucher/Add_Voucher'
+                    }
+                ]
+            }
+        ]
+    },
     {
         items: [{ label: 'Đơn Hàng', icon: 'pi pi-fw pi-shopping-cart', to: '/Orders/List' }]
     },
