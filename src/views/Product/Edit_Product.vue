@@ -17,19 +17,19 @@ const loading = ref(false);
 const categoryLoading = ref(true);
 
 const productForm = reactive({
-  product_name: "",
-  category_id: null,
-  price: 0,
-  status: 0,
-  sku: "",
+    product_name: '',
+    category_id: null,
+    price: 0,
+    status: 0,
+    sku: ''
 });
 
 const errors = reactive({
-  product_name: "",
-  category_id: "",
-  price: "",
-  status: "",
-  sku: "",
+    product_name: '',
+    category_id: '',
+    price: '',
+    status: '',
+    sku: ''
 });
 
 // ---------------------- LOAD CATEGORIES ----------------------
@@ -69,29 +69,29 @@ const loadProduct = async () => {
 
 // ---------------------- VALIDATE ----------------------
 const validateForm = () => {
-  Object.keys(errors).forEach(key => errors[key] = "");
+    Object.keys(errors).forEach((key) => (errors[key] = ''));
 
-  if (!productForm.product_name.trim()) errors.product_name = "Tên sản phẩm không được để trống.";
-  if (!productForm.category_id) errors.category_id = "Vui lòng chọn danh mục.";
-  if (!productForm.price || Number(productForm.price) <= 0) errors.price = "Giá sản phẩm phải lớn hơn 0.";
-  if (productForm.status === null) errors.status = "Vui lòng chọn trạng thái.";
-  if (!productForm.sku.trim()) errors.sku = "SKU không được để trống.";
+    if (!productForm.product_name.trim()) errors.product_name = 'Tên sản phẩm không được để trống.';
+    if (!productForm.category_id) errors.category_id = 'Vui lòng chọn danh mục.';
+    if (!productForm.price || Number(productForm.price) <= 0) errors.price = 'Giá sản phẩm phải lớn hơn 0.';
+    if (productForm.status === null) errors.status = 'Vui lòng chọn trạng thái.';
+    if (!productForm.sku.trim()) errors.sku = 'SKU không được để trống.';
 
-  return !Object.values(errors).some(e => e);
+    return !Object.values(errors).some((e) => e);
 };
 
 // ---------------------- SUBMIT ----------------------
 const submitForm = async () => {
-  if (!validateForm()) return;
+    if (!validateForm()) return;
 
-  loading.value = true;
-  try {
-    const formData = new FormData();
-    formData.append("product_name", productForm.product_name);
-    formData.append("category_id", productForm.category_id);
-    formData.append("price", productForm.price);
-    formData.append("status", productForm.status);
-    formData.append("sku", productForm.sku);
+    loading.value = true;
+    try {
+        const formData = new FormData();
+        formData.append('product_name', productForm.product_name);
+        formData.append('category_id', productForm.category_id);
+        formData.append('price', productForm.price);
+        formData.append('status', productForm.status);
+        formData.append('sku', productForm.sku);
 
         await apiClient.get(`/products/${productId}?_method=PUT`, formData, {
             headers: {
@@ -100,91 +100,83 @@ const submitForm = async () => {
             }
         });
 
-    alert("✅ Cập nhật thành công!");
-    router.push("/Product/ProductList"); // Chuyển về list sau khi cập nhật
-  } catch (err) {
-    console.error("❌ Lỗi API:", err.response?.data);
-    alert("❌ Cập nhật thất bại!");
-  } finally {
-    loading.value = false;
-  }
+        alert('✅ Cập nhật thành công!');
+        router.push('/Product/ProductList'); // Chuyển về list sau khi cập nhật
+    } catch (err) {
+        console.error('❌ Lỗi API:', err.response?.data);
+        alert('❌ Cập nhật thất bại!');
+    } finally {
+        loading.value = false;
+    }
 };
 
 // ---------------------- MOUNT ----------------------
 onMounted(() => {
-  loadCategories();
-  loadProduct();
+    loadCategories();
+    loadProduct();
 });
 </script>
 
 <template>
-  <div class="card flex-1">
-    <h2 class="font-semibold text-xl mb-4">Chỉnh sửa Sản Phẩm</h2>
+    <div class="card flex-1">
+        <h2 class="font-semibold text-xl mb-4">Chỉnh sửa Sản Phẩm</h2>
 
-    <div class="flex flex-col gap-4">
-      <!-- Tên sản phẩm -->
-      <div class="flex flex-col gap-1 w-full">
-        <label>Tên sản phẩm</label>
-        <InputText v-model="productForm.product_name" class="w-full" />
-        <span v-if="errors.product_name" class="text-red-600 text-sm">{{ errors.product_name }}</span>
-      </div>
+        <div class="flex flex-col gap-4">
+            <!-- Tên sản phẩm -->
+            <div class="flex flex-col gap-1 w-full">
+                <label>Tên sản phẩm</label>
+                <InputText v-model="productForm.product_name" class="w-full" />
+                <span v-if="errors.product_name" class="text-red-600 text-sm">{{ errors.product_name }}</span>
+            </div>
 
-      <!-- Danh mục -->
-      <div class="flex flex-col gap-1 w-full">
-        <label>Danh mục</label>
-        <Dropdown
-          v-model="productForm.category_id"
-          :options="categories"
-          optionLabel="name"
-          optionValue="id"
-          placeholder="Chọn danh mục"
-          class="w-full"
-          :loading="categoryLoading"
-        />
-        <span v-if="errors.category_id" class="text-red-600 text-sm">{{ errors.category_id }}</span>
-      </div>
+            <!-- Danh mục -->
+            <div class="flex flex-col gap-1 w-full">
+                <label>Danh mục</label>
+                <Dropdown v-model="productForm.category_id" :options="categories" optionLabel="name" optionValue="id" placeholder="Chọn danh mục" class="w-full" :loading="categoryLoading" />
+                <span v-if="errors.category_id" class="text-red-600 text-sm">{{ errors.category_id }}</span>
+            </div>
 
-      <!-- Giá -->
-      <div class="flex flex-col gap-1 w-full">
-        <label>Giá</label>
-        <InputText v-model="productForm.price" type="number" class="w-full" />
-        <span v-if="errors.price" class="text-red-600 text-sm">{{ errors.price }}</span>
-      </div>
+            <!-- Giá -->
+            <div class="flex flex-col gap-1 w-full">
+                <label>Giá</label>
+                <InputText v-model="productForm.price" type="number" class="w-full" />
+                <span v-if="errors.price" class="text-red-600 text-sm">{{ errors.price }}</span>
+            </div>
 
-      <!-- Trạng thái -->
-      <div class="flex flex-col gap-1 w-full">
-        <label>Trạng thái</label>
-        <Dropdown
-          v-model="productForm.status"
-          :options="[
-            { label: 'Hiện', value: 1 },
-            { label: 'Ẩn', value: 0 }
-          ]"
-          optionLabel="label"
-          optionValue="value"
-          class="w-full"
-        />
-        <span v-if="errors.status" class="text-red-600 text-sm">{{ errors.status }}</span>
-      </div>
+            <!-- Trạng thái -->
+            <div class="flex flex-col gap-1 w-full">
+                <label>Trạng thái</label>
+                <Dropdown
+                    v-model="productForm.status"
+                    :options="[
+                        { label: 'Hiện', value: 1 },
+                        { label: 'Ẩn', value: 0 }
+                    ]"
+                    optionLabel="label"
+                    optionValue="value"
+                    class="w-full"
+                />
+                <span v-if="errors.status" class="text-red-600 text-sm">{{ errors.status }}</span>
+            </div>
 
-      <!-- SKU -->
-      <div class="flex flex-col gap-1 w-full">
-        <label>SKU</label>
-        <InputText v-model="productForm.sku" class="w-full" />
-        <span v-if="errors.sku" class="text-red-600 text-sm">{{ errors.sku }}</span>
-      </div>
+            <!-- SKU -->
+            <div class="flex flex-col gap-1 w-full">
+                <label>SKU</label>
+                <InputText v-model="productForm.sku" class="w-full" />
+                <span v-if="errors.sku" class="text-red-600 text-sm">{{ errors.sku }}</span>
+            </div>
 
-      <!-- Submit -->
-      <Button label="Cập nhật sản phẩm" class="mt-4" :loading="loading" @click="submitForm" />
+            <!-- Submit -->
+            <Button label="Cập nhật sản phẩm" class="mt-4" :loading="loading" @click="submitForm" />
+        </div>
     </div>
-  </div>
 </template>
 
 <style scoped>
 .card.flex-1 {
-  width: 100%;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
 }
 </style>

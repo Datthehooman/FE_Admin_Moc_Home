@@ -14,11 +14,11 @@ const categoryId = route.params.id;
 
 const loading = ref(false);
 const categoryForm = reactive({
-  category_name: "",
-  image: null,
+    category_name: '',
+    image: null
 });
 const errors = reactive({
-  category_name: "",
+    category_name: ''
 });
 
 // ---------------------- LOAD CATEGORY ----------------------
@@ -38,24 +38,24 @@ const loadCategory = async () => {
 
 // ---------------------- VALIDATE ----------------------
 const validateForm = () => {
-  errors.category_name = "";
-  if (!categoryForm.category_name.trim()) errors.category_name = "Tên danh mục không được để trống.";
-  return !errors.category_name;
+    errors.category_name = '';
+    if (!categoryForm.category_name.trim()) errors.category_name = 'Tên danh mục không được để trống.';
+    return !errors.category_name;
 };
 
 // ---------------------- SUBMIT ----------------------
 const submitForm = async () => {
-  if (!validateForm()) return;
+    if (!validateForm()) return;
 
-  loading.value = true;
-  try {
-    const formData = new FormData();
-    formData.append("category_name", categoryForm.category_name.trim());
+    loading.value = true;
+    try {
+        const formData = new FormData();
+        formData.append('category_name', categoryForm.category_name.trim());
 
-    if (categoryForm.image && categoryForm.image.length > 0) {
-      const file = categoryForm.image[0];
-      if (file instanceof File) formData.append("image", file);
-    }
+        if (categoryForm.image && categoryForm.image.length > 0) {
+            const file = categoryForm.image[0];
+            if (file instanceof File) formData.append('image', file);
+        }
 
         await apiClient.get(`/category/${categoryId}`, formData, { headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'multipart/form-data' } });
 
@@ -69,52 +69,41 @@ const submitForm = async () => {
     }
 };
 
-
 // ---------------------- MOUNT ----------------------
 onMounted(() => {
-  loadCategory();
+    loadCategory();
 });
 </script>
 
-
 <template>
-  <div class="card flex-1">
-    <h2 class="font-semibold text-xl mb-4">Chỉnh sửa Danh Mục</h2>
+    <div class="card flex-1">
+        <h2 class="font-semibold text-xl mb-4">Chỉnh sửa Danh Mục</h2>
 
-    <div class="flex flex-col gap-4">
-      <!-- Tên danh mục -->
-      <div class="flex flex-col gap-1 w-full">
-        <label>Tên danh mục</label>
-        <InputText v-model="categoryForm.category_name" class="w-full" />
-        <span v-if="errors.category_name" class="text-red-600 text-sm">{{ errors.category_name }}</span>
-      </div>
+        <div class="flex flex-col gap-4">
+            <!-- Tên danh mục -->
+            <div class="flex flex-col gap-1 w-full">
+                <label>Tên danh mục</label>
+                <InputText v-model="categoryForm.category_name" class="w-full" />
+                <span v-if="errors.category_name" class="text-red-600 text-sm">{{ errors.category_name }}</span>
+            </div>
 
-      <!-- Hình ảnh -->
-      <div class="flex flex-col gap-1 w-full">
-        <label>Hình ảnh</label>
-        <FileUpload
-          v-model="categoryForm.image"
-          name="image"
-          customUpload
-          auto
-          :maxFileSize="1000000"
-          chooseLabel="Chọn hình"
-          removeLabel="Xóa"
-          accept="image/*"
-        />
-      </div>
+            <!-- Hình ảnh -->
+            <div class="flex flex-col gap-1 w-full">
+                <label>Hình ảnh</label>
+                <FileUpload v-model="categoryForm.image" name="image" customUpload auto :maxFileSize="1000000" chooseLabel="Chọn hình" removeLabel="Xóa" accept="image/*" />
+            </div>
 
-      <!-- Submit -->
-      <Button label="Cập nhật danh mục" class="mt-4" :loading="loading" @click="submitForm" />
+            <!-- Submit -->
+            <Button label="Cập nhật danh mục" class="mt-4" :loading="loading" @click="submitForm" />
+        </div>
     </div>
-  </div>
 </template>
 
 <style scoped>
 .card.flex-1 {
-  width: 100%;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
 }
 </style>
