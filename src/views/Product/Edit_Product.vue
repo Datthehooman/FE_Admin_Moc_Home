@@ -1,11 +1,11 @@
 <script setup>
-import { ref, onMounted, reactive } from "vue";
-import { useAuthStore } from "@/stores/auth";
-import axios from "axios";
-import InputText from "primevue/inputtext";
-import Dropdown from "primevue/dropdown";
-import Button from "primevue/button";
-import { useRoute, useRouter } from "vue-router";
+import apiClient from '@/api/axios';
+import { useAuthStore } from '@/stores/auth';
+import Button from 'primevue/button';
+import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
+import { onMounted, reactive, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -34,44 +34,37 @@ const errors = reactive({
 
 // ---------------------- LOAD CATEGORIES ----------------------
 const loadCategories = async () => {
-  categoryLoading.value = true;
-  try {
-    const res = await axios.get(
-      "http://127.0.0.1:8000/api/system/category/list",
-      { headers: { Authorization: `Bearer ${authStore.token}` } }
-    );
-    // Ép kiểu id thành number để Dropdown nhận đúng
-    categories.value = res.data.result.data.map(c => ({
-      id: Number(c.id),
-      name: c.category_name
-    }));
-  } catch (err) {
-    console.error("Lỗi tải danh mục:", err);
-  } finally {
-    categoryLoading.value = false;
-  }
+    categoryLoading.value = true;
+    try {
+        const res = await apiClient.get('/category/list', { headers: { Authorization: `Bearer ${authStore.token}` } });
+        // Ép kiểu id thành number để Dropdown nhận đúng
+        categories.value = res.data.result.data.map((c) => ({
+            id: Number(c.id),
+            name: c.category_name
+        }));
+    } catch (err) {
+        console.error('Lỗi tải danh mục:', err);
+    } finally {
+        categoryLoading.value = false;
+    }
 };
 
 // ---------------------- LOAD PRODUCT ----------------------
 const loadProduct = async () => {
-  loading.value = true;
-  try {
-    const res = await axios.get(
-      `http://127.0.0.1:8000/api/system/products/${productId}`,
-      { headers: { Authorization: `Bearer ${authStore.token}` } }
-    );
-const p = res.data.result.data; // note: data chứ không phải result
-productForm.product_name = p.product_name ?? "";
-productForm.category_id = Number(p.category_id) || null;
-productForm.price = Number(p.price) || 0;
-productForm.status = Number(p.status) ?? 0;
-productForm.sku = p.sku ?? "";
-
-  } catch (err) {
-    console.error("Lỗi tải sản phẩm:", err);
-  } finally {
-    loading.value = false;
-  }
+    loading.value = true;
+    try {
+        const res = await apiClient.get(`/products/${productId}`, { headers: { Authorization: `Bearer ${authStore.token}` } });
+        const p = res.data.result.data; // note: data chứ không phải result
+        productForm.product_name = p.product_name ?? '';
+        productForm.category_id = Number(p.category_id) || null;
+        productForm.price = Number(p.price) || 0;
+        productForm.status = Number(p.status) ?? 0;
+        productForm.sku = p.sku ?? '';
+    } catch (err) {
+        console.error('Lỗi tải sản phẩm:', err);
+    } finally {
+        loading.value = false;
+    }
 };
 
 // ---------------------- VALIDATE ----------------------
@@ -100,16 +93,12 @@ const submitForm = async () => {
     formData.append("status", productForm.status);
     formData.append("sku", productForm.sku);
 
-    await axios.post(
-      `http://127.0.0.1:8000/api/system/products/${productId}?_method=PUT`,
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${authStore.token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
+        await apiClient.get(`/products/${productId}?_method=PUT`, formData, {
+            headers: {
+                Authorization: `Bearer ${authStore.token}`,
+                'Content-Type': 'multipart/form-data'
+            }
+        });
 
     alert("✅ Cập nhật thành công!");
     router.push("/Product/ProductList"); // Chuyển về list sau khi cập nhật

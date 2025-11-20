@@ -1,8 +1,7 @@
 <script setup>
-import { ref, reactive } from "vue";
-import axios from "axios";
-import { useAuthStore } from "@/stores/auth";
-import InputText from 'primevue/inputtext';
+import { useAuthStore } from '@/stores/auth';
+import axios from 'axios';
+import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
@@ -53,16 +52,12 @@ const submitForm = async () => {
       formData.append('image', categoryForm.image.file);
     }
 
-    const response = await axios.post(
-      'http://127.0.0.1:8000/api/system/category',
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${authStore.token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      }
-    );
+        const response = await axios.post('https://api.mocfurni.shop/api/system/category', formData, {
+            headers: {
+                Authorization: `Bearer ${authStore.token}`,
+                'Content-Type': 'multipart/form-data'
+            }
+        });
 
     alert('Tạo danh mục thành công!');
     console.log('Response:', response.data);

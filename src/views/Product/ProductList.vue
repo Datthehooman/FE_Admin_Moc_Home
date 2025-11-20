@@ -1,14 +1,17 @@
 <script setup>
-import { ref, onBeforeMount } from "vue";
-import { FilterMatchMode } from "@primevue/core/api";
+import apiClient from '@/api/axios';
+import { FilterMatchMode } from '@primevue/core/api';
+import { onBeforeMount, ref } from 'vue';
 
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
-import Button from "primevue/button";
-import InputText from "primevue/inputtext";
-import Tag from "primevue/tag";
-import IconField from "primevue/iconfield";
-import InputIcon from "primevue/inputicon";
+import Button from 'primevue/button';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
+import InputText from 'primevue/inputtext';
+import Tag from 'primevue/tag';
+
+import { useAuthStore } from '@/stores/auth';
 
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
@@ -29,9 +32,7 @@ onBeforeMount(async () => {
 async function loadProducts() {
     loading.value = true;
     try {
-        const response = await axios.get("http://127.0.0.1:8000/api/system/products", {
-            headers: { Authorization: `Bearer ${authStore.token}` }
-        });
+        const response = await apiClient.get('/products');
         products.value = response.data.result.data || [];
     } catch (err) {
         console.error("Lỗi tải sản phẩm:", err);
@@ -59,7 +60,7 @@ const deleteProduct = async (product) => {
     if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${product.product_name}" không?`)) return;
 
     try {
-        await axios.delete(`http://127.0.0.1:8000/api/system/products/${product.product_id}`, {
+        await apiClient.delete(`/products/${product.product_id}`, {
             headers: { Authorization: `Bearer ${authStore.token}` }
         });
 

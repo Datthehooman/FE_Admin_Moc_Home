@@ -1,8 +1,7 @@
 <script setup>
-import { ref, onBeforeMount, reactive } from "vue";
-import { useAuthStore } from "@/stores/auth";
-import axios from "axios";
-import InputText from 'primevue/inputtext';
+import apiClient from '@/api/axios';
+import { useAuthStore } from '@/stores/auth';
+import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
@@ -34,21 +33,21 @@ const categoryLoading = ref(true);
 
 // Load categories từ API
 const loadCategories = async () => {
-  categoryLoading.value = true;
-  try {
-    const res = await axios.get('http://127.0.0.1:8000/api/system/category/list', {
-      headers: { Authorization: `Bearer ${authStore.token}` }
-    });
-    categories.value = res.data.result.data.map(c => ({
-      id: c.id,
-      name: c.category_name
-    }));
-  } catch (err) {
-    console.error('Lỗi tải danh mục:', err);
-    categories.value = [];
-  } finally {
-    categoryLoading.value = false;
-  }
+    categoryLoading.value = true;
+    try {
+        const res = await apiClient.get('/category/list', {
+            headers: { Authorization: `Bearer ${authStore.token}` }
+        });
+        categories.value = res.data.result.data.map((c) => ({
+            id: c.id,
+            name: c.category_name
+        }));
+    } catch (err) {
+        console.error('Lỗi tải danh mục:', err);
+        categories.value = [];
+    } finally {
+        categoryLoading.value = false;
+    }
 };
 
 onBeforeMount(() => {
@@ -82,8 +81,35 @@ const submitForm = async () => {
     formData.append('status', productForm.status === 'Hiện' ? 1 : 0);
     formData.append('sku', productForm.sku);
 
-    if (productForm.images.length > 0) {
-      formData.append('images[0]', productForm.images[0].file);
+        if (productForm.images.length > 0) {
+            formData.append('images[0]', productForm.images[0].file);
+        }
+
+        const response = await apiClient.post('/products', formData, {
+            headers: {
+                Authorization: `Bearer ${authStore.token}`,
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+
+        alert('Thêm sản phẩm thành công!');
+        console.log('Response:', response.data);
+
+        // Reset form sau khi thêm
+        Object.keys(productForm).forEach((key) => {
+            if (Array.isArray(productForm[key])) productForm[key] = [];
+            else productForm[key] = '';
+        });
+    } catch (err) {
+        if (err.response) {
+            console.error('Response data:', err.response.data);
+            alert('Thêm sản phẩm thất bại: ' + JSON.stringify(err.response.data));
+        } else {
+            console.error(err);
+            alert('Thêm sản phẩm thất bại!');
+        }
+    } finally {
+        loading.value = false;
     }
 
     const response = await axios.post(

@@ -1,5 +1,4 @@
 import AppLayout from '@/layout/AppLayout.vue';
-import { useAuthStore } from '@/stores/auth';
 import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
@@ -199,30 +198,30 @@ const router = createRouter({
     ]
 });
 
-router.beforeEach(async (to, from, next) => {
-    const auth = useAuthStore();
+// router.beforeEach(async (to, from, next) => {
+//     const auth = useAuthStore();
 
-    // Public routes that do NOT require login
-    const publicRoutes = ['login', 'Login', 'Register', 'landing', 'notfound'];
-    const isPublic = publicRoutes.includes(to.name);
+//     // Public routes that do NOT require login
+//     const publicRoutes = ['login', 'Login', 'Register', 'landing', 'notfound'];
+//     const isPublic = publicRoutes.includes(to.name);
 
-    // Not logged in → go to login
-    if (!auth.isAuthenticated && !isPublic) {
-        return next('/auth/login');
-    }
+//     // Not logged in → go to login
+//     if (!auth.isAuthenticated && !isPublic) {
+//         return next('/auth/login');
+//     }
 
-    // If logged in but user info not loaded → fetch
-    if (auth.isAuthenticated && !auth.user) {
-        try {
-            await auth.fetchUser();
-        } catch (error) {
-            // Token expired or invalid → logout → redirect login
-            auth.clearAuth();
-            return next('/auth/login');
-        }
-    }
+//     // If logged in but user info not loaded → fetch
+//     if (auth.isAuthenticated && !auth.user) {
+//         try {
+//             await auth.fetchUser();
+//         } catch (error) {
+//             // Token expired or invalid → logout → redirect login
+//             auth.clearAuth();
+//             return next('/auth/login');
+//         }
+//     }
 
-    next();
-});
+//     next();
+// });
 
 export default router;

@@ -1,11 +1,11 @@
 <script setup>
-import { ref, reactive, onMounted } from "vue";
-import { useAuthStore } from "@/stores/auth";
-import axios from "axios";
-import InputText from "primevue/inputtext";
-import FileUpload from "primevue/fileupload";
-import Button from "primevue/button";
-import { useRoute, useRouter } from "vue-router";
+import apiClient from '@/api/axios';
+import { useAuthStore } from '@/stores/auth';
+import Button from 'primevue/button';
+import FileUpload from 'primevue/fileupload';
+import InputText from 'primevue/inputtext';
+import { onMounted, reactive, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -23,20 +23,17 @@ const errors = reactive({
 
 // ---------------------- LOAD CATEGORY ----------------------
 const loadCategory = async () => {
-  loading.value = true;
-  try {
-    const res = await axios.get(
-      `http://127.0.0.1:8000/api/system/category/${categoryId}`,
-      { headers: { Authorization: `Bearer ${authStore.token}` } }
-    );
-    const c = res.data.result.data;
-    categoryForm.category_name = c.category_name ?? "";
-    categoryForm.image = c.full_image_url ? [c.full_image_url] : [];
-  } catch (err) {
-    console.error("Lỗi tải danh mục:", err);
-  } finally {
-    loading.value = false;
-  }
+    loading.value = true;
+    try {
+        const res = await apiClient.get(`/category/${categoryId}`, { headers: { Authorization: `Bearer ${authStore.token}` } });
+        const c = res.data.result.data;
+        categoryForm.category_name = c.category_name ?? '';
+        categoryForm.image = c.full_image_url ? [c.full_image_url] : [];
+    } catch (err) {
+        console.error('Lỗi tải danh mục:', err);
+    } finally {
+        loading.value = false;
+    }
 };
 
 // ---------------------- VALIDATE ----------------------
@@ -60,21 +57,16 @@ const submitForm = async () => {
       if (file instanceof File) formData.append("image", file);
     }
 
-    await axios.post(
-      `http://127.0.0.1:8000/api/system/category/${categoryId}`,
-      formData,
-      { headers: { Authorization: `Bearer ${authStore.token}`, "Content-Type": "multipart/form-data" } }
-    );
+        await apiClient.get(`/category/${categoryId}`, formData, { headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'multipart/form-data' } });
 
-    alert("✅ Cập nhật danh mục thành công!");
-    router.push("/Category/Categories");
-
-  } catch (err) {
-    console.error("❌ Lỗi API:", err.response?.data || err);
-    alert("❌ Cập nhật thất bại!");
-  } finally {
-    loading.value = false;
-  }
+        alert('✅ Cập nhật danh mục thành công!');
+        router.push('/Category/Categories');
+    } catch (err) {
+        console.error('❌ Lỗi API:', err.response?.data || err);
+        alert('❌ Cập nhật thất bại!');
+    } finally {
+        loading.value = false;
+    }
 };
 
 

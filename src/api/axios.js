@@ -1,38 +1,24 @@
 import axios from 'axios';
 
+// Create Axios instance
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
-    timeout: 10000
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://api.mocfurni.shop/api/system',
+    timeout: 10000,
+    withCredentials: true // send cookies automatically if API supports it
 });
 
-// // Interceptor cho request
-// apiClient.interceptors.request.use(
-//     (config) => {
-//         const authStore = useAuthStore();
-//         if (authStore.token) {
-//             config.headers.Authorization = `Bearer ${authStore.token}`;
-//         }
-//         return config;
-//     },
-//     (error) => Promise.reject(error)
-// );
+// Interceptor to attach token from cookie set by client
+apiClient.interceptors.request.use((config) => {
+    // Read token from cookie
+    const match = document.cookie.match(new RegExp('(^| )token=([^;]+)'));
+    const token = match ? decodeURIComponent(match[2]) : null;
 
-// // Interceptor cho response
-// apiClient.interceptors.response.use(
-//     (response) => response,
-//     async (error) => {
-//         const authStore = useAuthStore();
+    if (token) {
+        config.headers = config.headers || {};
+        config.headers.Authorization = `Bearer ${token}`;
+    }
 
-//         // If 401, clear auth and redirect to login
-//         if (error.response && error.response.status === 401) {
-//             authStore.clearAuth();
-//             if (window.location.pathname !== '/auth/login') {
-//                 window.location.href = '/auth/login';
-//             }
-//         }
-
-//         return Promise.reject(error);
-//     }
-// );
+    return config;
+});
 
 export default apiClient;
