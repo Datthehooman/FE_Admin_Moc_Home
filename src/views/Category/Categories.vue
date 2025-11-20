@@ -1,4 +1,5 @@
 <script setup>
+import apiClient from '@/api/axios';
 import { FilterMatchMode } from '@primevue/core/api';
 import { onBeforeMount, ref } from 'vue';
 
@@ -9,7 +10,6 @@ import InputText from "primevue/inputtext";
 import Tag from "primevue/tag";
 
 import { useAuthStore } from '@/stores/auth';
-import axios from 'axios';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -28,7 +28,7 @@ onBeforeMount(async () => {
 async function loadCategories() {
     loading.value = true;
     try {
-        const response = await axios.get('https://api.mocfurni.shop/api/system/category/list', {
+        const response = await apiClient.get('/category/list', {
             headers: { Authorization: `Bearer ${authStore.token}` }
         });
         categories.value = response.data.result.data || [];
@@ -53,7 +53,7 @@ const deleteCategory = async (category) => {
     if (!confirm(`Bạn có chắc muốn xóa danh mục "${category.category_name}" không?`)) return;
 
     try {
-        await axios.delete(`https://api.mocfurni.shop/api/system/category/${category.id}`, {
+        await apiClient.delete(`/category/${category.id}`, {
             headers: { Authorization: `Bearer ${authStore.token}` }
         });
 
