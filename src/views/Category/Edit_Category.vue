@@ -1,6 +1,6 @@
 <script setup>
+import apiClient from '@/api/axios';
 import { useAuthStore } from '@/stores/auth';
-import axios from 'axios';
 import Button from 'primevue/button';
 import FileUpload from 'primevue/fileupload';
 import InputText from 'primevue/inputtext';
@@ -25,7 +25,7 @@ const errors = reactive({
 const loadCategory = async () => {
     loading.value = true;
     try {
-        const res = await axios.get(`https://api.mocfurni.shop/api/system/category/${categoryId}`, { headers: { Authorization: `Bearer ${authStore.token}` } });
+        const res = await apiClient.get(`/category/${categoryId}`, { headers: { Authorization: `Bearer ${authStore.token}` } });
         const c = res.data.result.data;
         categoryForm.category_name = c.category_name ?? '';
         categoryForm.image = c.full_image_url ? [c.full_image_url] : [];
@@ -57,7 +57,7 @@ const submitForm = async () => {
             if (file instanceof File) formData.append('image', file);
         }
 
-        await axios.post(`https://api.mocfurni.shop/api/system/category/${categoryId}`, formData, { headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'multipart/form-data' } });
+        await apiClient.get(`/category/${categoryId}`, formData, { headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'multipart/form-data' } });
 
         alert('✅ Cập nhật danh mục thành công!');
         router.push('/Category/Categories');

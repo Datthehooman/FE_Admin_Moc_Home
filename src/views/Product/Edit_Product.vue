@@ -1,6 +1,6 @@
 <script setup>
+import apiClient from '@/api/axios';
 import { useAuthStore } from '@/stores/auth';
-import axios from 'axios';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
@@ -36,7 +36,7 @@ const errors = reactive({
 const loadCategories = async () => {
     categoryLoading.value = true;
     try {
-        const res = await axios.get('https://api.mocfurni.shop/api/system/category/list', { headers: { Authorization: `Bearer ${authStore.token}` } });
+        const res = await apiClient.get('/category/list', { headers: { Authorization: `Bearer ${authStore.token}` } });
         // Ép kiểu id thành number để Dropdown nhận đúng
         categories.value = res.data.result.data.map((c) => ({
             id: Number(c.id),
@@ -53,7 +53,7 @@ const loadCategories = async () => {
 const loadProduct = async () => {
     loading.value = true;
     try {
-        const res = await axios.get(`https://api.mocfurni.shop/api/system/products/${productId}`, { headers: { Authorization: `Bearer ${authStore.token}` } });
+        const res = await apiClient.get(`/products/${productId}`, { headers: { Authorization: `Bearer ${authStore.token}` } });
         const p = res.data.result.data; // note: data chứ không phải result
         productForm.product_name = p.product_name ?? '';
         productForm.category_id = Number(p.category_id) || null;
@@ -93,7 +93,7 @@ const submitForm = async () => {
         formData.append('status', productForm.status);
         formData.append('sku', productForm.sku);
 
-        await axios.post(`https://api.mocfurni.shop/api/system/products/${productId}?_method=PUT`, formData, {
+        await apiClient.get(`/products/${productId}?_method=PUT`, formData, {
             headers: {
                 Authorization: `Bearer ${authStore.token}`,
                 'Content-Type': 'multipart/form-data'

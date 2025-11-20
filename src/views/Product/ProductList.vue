@@ -1,4 +1,5 @@
 <script setup>
+import apiClient from '@/api/axios';
 import { FilterMatchMode } from '@primevue/core/api';
 import { onBeforeMount, ref } from 'vue';
 
@@ -11,7 +12,6 @@ import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
 
 import { useAuthStore } from '@/stores/auth';
-import axios from 'axios';
 
 const products = ref([]);
 const filters = ref(null);
@@ -28,9 +28,7 @@ onBeforeMount(async () => {
 async function loadProducts() {
     loading.value = true;
     try {
-        const response = await axios.get('https://api.mocfurni.shop/api/system/products', {
-            headers: { Authorization: `Bearer ${authStore.token}` }
-        });
+        const response = await apiClient.get('/products');
         products.value = response.data.result.data || [];
     } catch (err) {
         console.error('Lỗi tải sản phẩm:', err);
@@ -58,7 +56,7 @@ const deleteProduct = async (product) => {
     if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${product.product_name}" không?`)) return;
 
     try {
-        await axios.delete(`https://api.mocfurni.shop/api/system/products/${product.product_id}`, {
+        await apiClient.delete(`/products/${product.product_id}`, {
             headers: { Authorization: `Bearer ${authStore.token}` }
         });
 
