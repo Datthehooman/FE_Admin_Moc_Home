@@ -1,5 +1,6 @@
 <script setup>
 import { FilterMatchMode } from '@primevue/core/api';
+import Dropdown from 'primevue/dropdown';
 import { onBeforeMount, ref } from 'vue';
 
 import Button from 'primevue/button';
@@ -18,6 +19,8 @@ const router = useRouter();
 const orders = ref([]);
 const filters = ref(null);
 const loading = ref(true);
+
+const orderStatuses = ['pending', 'confirmed', 'processing', 'shipping', 'completed', 'cancelled'];
 
 onBeforeMount(() => {
     loadOrders();
@@ -38,6 +41,23 @@ async function loadOrders() {
         initFilters();
     }
 }
+
+const updateOrderStatus = async (order, newStatus) => {
+    if (!confirm(`Chuyển trạng thái đơn ${order.order_id} sang "${newStatus}"?`)) return;
+
+    try {
+        await apiClient.post(`/order/${order.order_id}/update-status`, {
+            order_status: newStatus
+        });
+
+        order.order_status = newStatus; // cập nhật UI
+
+        alert('✅ Cập nhật trạng thái thành công!');
+    } catch (err) {
+        console.error('❌ Lỗi cập nhật trạng thái:', err.response?.data || err);
+        alert('❌ Không thể cập nhật trạng thái!');
+    }
+};
 
 function initFilters() {
     filters.value = {
@@ -116,7 +136,23 @@ function formatDate(v) {
             <!-- Trạng thái -->
             <Column header="Trạng thái" style="min-width: 10rem">
                 <template #body="{ data }">
-                    <Tag :value="data.order_status" :severity="data.order_status === 'pending' ? 'warning' : data.order_status === 'completed' ? 'success' : 'danger'" />
+                    <Tag
+                        :value="data.order_status"
+                        :severity="
+                            data.order_status === 'pending'
+                                ? 'warning'
+                                : data.order_status === 'confirmed'
+                                  ? 'info'
+                                  : data.order_status === 'processing'
+                                    ? 'help'
+                                    : data.order_status === 'shipping'
+                                      ? 'primary'
+                                      : data.order_status === 'completed'
+                                        ? 'success'
+                                        : 'danger'
+                        "
+                        class="capitalize"
+                    />
                 </template>
             </Column>
 
@@ -137,10 +173,21 @@ function formatDate(v) {
             </Column>
 
             <!-- Hành động -->
-            <Column header="Hành động" style="min-width: 10rem">
+            <Column header="Hành động" style="min-width: 12rem">
                 <template #body="{ data }">
                     <div class="flex gap-2">
-                        <Button icon="pi pi-eye" text severity="info" @click="router.push(`/Order/Order_Detail/${data.order_id}`)" />
+                        <!-- Xem chi tiết -->
+                        <Button icon="pi pi-eye" text severity="info" @click="router.push(`/Order/Detail_Order/${data.order_id}`)" />
+
+                        <Dropdown :options="orderStatuses" v-model="data.order_status" @change="updateOrderStatus(data, data.order_status)" class="w-full">
+                            <template #value="{ value }">
+                                <span class="capitalize">{{ value }}</span>
+                            </template>
+
+                            <template #option="{ option }">
+                                <span class="capitalize">{{ option }}</span>
+                            </template>
+                        </Dropdown>
                     </div>
                 </template>
             </Column>
