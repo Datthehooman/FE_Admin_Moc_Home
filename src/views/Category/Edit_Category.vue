@@ -57,7 +57,13 @@ const submitForm = async () => {
             if (file instanceof File) formData.append('image', file);
         }
 
-        await apiClient.get(`/category/${categoryId}`, formData, { headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'multipart/form-data' } });
+       await apiClient.post(`/category/${categoryId}`, formData, {
+    headers: {
+        Authorization: `Bearer ${authStore.token}`,
+        'Content-Type': 'multipart/form-data'
+    }
+});
+
 
         alert('✅ Cập nhật danh mục thành công!');
         router.push('/Category/Categories');

@@ -87,24 +87,25 @@ const submitForm = async () => {
     loading.value = true;
     try {
         const formData = new FormData();
-        formData.append('product_name', productForm.product_name);
-        formData.append('category_id', productForm.category_id);
-        formData.append('price', productForm.price);
-        formData.append('status', productForm.status);
-        formData.append('sku', productForm.sku);
+        formData.append("product_name", productForm.product_name);
+        formData.append("category_id", productForm.category_id);
+        formData.append("price", productForm.price);
+        formData.append("status", productForm.status);
+        formData.append("sku", productForm.sku);
 
-        await apiClient.get(`/products/${productId}?_method=PUT`, formData, {
+        await apiClient.post(`/products/${productId}`, formData, {
             headers: {
                 Authorization: `Bearer ${authStore.token}`,
-                'Content-Type': 'multipart/form-data'
-            }
+                "Content-Type": "multipart/form-data",
+            },
+            params: { _method: "PUT" }
         });
 
-        alert('✅ Cập nhật thành công!');
-        router.push('/Product/ProductList'); // Chuyển về list sau khi cập nhật
+        alert("Cập nhật thành công!");
+        router.push('/Product/ProductList');
     } catch (err) {
-        console.error('❌ Lỗi API:', err.response?.data);
-        alert('❌ Cập nhật thất bại!');
+        console.error("Lỗi API:", err.response?.data);
+        alert("Cập nhật thất bại!");
     } finally {
         loading.value = false;
     }
