@@ -126,7 +126,7 @@ const deleteVoucher = async (voucher) => {
 
             <Column header="Trạng thái" style="min-width: 10rem">
                 <template #body="{ data }">
-                    <Tag :value="Number(data.status) === 1 ? 'Hiển thị' : 'Ẩn'" :severity="Number(data.status) === 1 ? 'success' : 'danger'" />
+                    <Tag :value="Number(data.status) === 1 ? 'Hoạt động' : 'Ngưng hoạt động'" :severity="Number(data.status) === 1 ? 'success' : 'danger'" />
                 </template>
             </Column>
             <Column field="description" header="Mô tả" style="min-width: 20rem">

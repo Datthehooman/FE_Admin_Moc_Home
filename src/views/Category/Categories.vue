@@ -110,7 +110,10 @@ const deleteCategory = async (category) => {
 
             <Column header="Trạng thái" style="min-width: 10rem">
                 <template #body="{ data }">
-                    <Tag :value="data.is_active === 1 ? 'Hiện' : 'Ẩn'" :severity="data.is_active === 1 ? 'success' : 'danger'" />
+                  <Tag
+  :value="Number(data.is_active) === 1 ? 'Hiện' : 'Ẩn'"
+  :severity="Number(data.is_active) === 1 ? 'success' : 'danger'"
+/>
                 </template>
             </Column>
 
