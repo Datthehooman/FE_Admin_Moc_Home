@@ -1,6 +1,6 @@
 <script setup>
+import apiClient from '@/api/axios';
 import { useAuthStore } from '@/stores/auth';
-import axios from 'axios';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import FileUpload from 'primevue/fileupload';
@@ -53,7 +53,7 @@ const submitForm = async () => {
             formData.append('image', categoryForm.image.file);
         }
 
-        const response = await axios.post('https://api.mocfurni.shop/api/system/category', formData, {
+        const response = await apiClient.post('/category', formData, {
             headers: {
                 Authorization: `Bearer ${authStore.token}`,
                 'Content-Type': 'multipart/form-data'

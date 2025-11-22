@@ -1,5 +1,4 @@
 import AppLayout from '@/layout/AppLayout.vue';
-import { useAuthStore } from '@/stores/auth';
 import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
@@ -55,6 +54,36 @@ const router = createRouter({
                     path: '/pages/auth/Register',
                     name: 'Register',
                     component: () => import('@/views/pages/auth/Register.vue')
+                },
+                {
+                    path: 'Voucher/List_Voucher',
+                    name: 'List_Voucher',
+                    component: () => import('@/views/Voucher/List_Voucher.vue')
+                },
+                {
+                    path: 'Voucher/Add_Voucher',
+                    name: 'Add_Voucher',
+                    component: () => import('@/views/Voucher/Add_Voucher.vue')
+                },
+                // {
+                //     path: 'Voucher/Edit_Voucher',
+                //     name: 'Edit_Voucher',
+                //     component: () => import('@/views/Voucher/Edit_Voucher.vue')
+                // },
+                {
+                    path: 'Voucher/Edit_Voucher/:id',
+                    name: 'Edit_Voucher',
+                    component: () => import('@/views/Voucher/Edit_Voucher.vue')
+                },
+                {
+                    path: 'Order/List_Order',
+                    name: 'List_Order',
+                    component: () => import('@/views/Order/List_Order.vue')
+                },
+                {
+                    path: 'Order/Detail_Order/:id',
+                    name: 'Detail_Order',
+                    component: () => import('@/views/Order/Detail_Order.vue')
                 },
                 {
                     path: '/uikit/formlayout',
@@ -149,6 +178,7 @@ const router = createRouter({
                 }
             ]
         },
+
         {
             path: '/landing',
             name: 'landing',
@@ -178,30 +208,30 @@ const router = createRouter({
     ]
 });
 
-router.beforeEach(async (to, from, next) => {
-    const auth = useAuthStore();
+// router.beforeEach(async (to, from, next) => {
+//     const auth = useAuthStore();
 
-    // Public routes that do NOT require login
-    const publicRoutes = ['login', 'Login', 'Register', 'landing', 'notfound'];
-    const isPublic = publicRoutes.includes(to.name);
+//     // Public routes that do NOT require login
+//     const publicRoutes = ['login', 'Login', 'Register', 'landing', 'notfound'];
+//     const isPublic = publicRoutes.includes(to.name);
 
-    // Not logged in → go to login
-    if (!auth.isAuthenticated && !isPublic) {
-        return next('/auth/login');
-    }
+//     // Not logged in → go to login
+//     if (!auth.isAuthenticated && !isPublic) {
+//         return next('/auth/login');
+//     }
 
-    // If logged in but user info not loaded → fetch
-    if (auth.isAuthenticated && !auth.user) {
-        try {
-            await auth.fetchUser();
-        } catch (error) {
-            // Token expired or invalid → logout → redirect login
-            auth.clearAuth();
-            return next('/auth/login');
-        }
-    }
+//     // If logged in but user info not loaded → fetch
+//     if (auth.isAuthenticated && !auth.user) {
+//         try {
+//             await auth.fetchUser();
+//         } catch (error) {
+//             // Token expired or invalid → logout → redirect login
+//             auth.clearAuth();
+//             return next('/auth/login');
+//         }
+//     }
 
-    next();
-});
+//     next();
+// });
 
 export default router;

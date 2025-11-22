@@ -1,6 +1,6 @@
 <script setup>
+import apiClient from '@/api/axios';
 import { useAuthStore } from '@/stores/auth';
-import axios from 'axios';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import FileUpload from 'primevue/fileupload';
@@ -36,7 +36,7 @@ const categoryLoading = ref(true);
 const loadCategories = async () => {
     categoryLoading.value = true;
     try {
-        const res = await axios.get('https://api.mocfurni.shop/api/system/category/list', {
+        const res = await apiClient.get('/category/list', {
             headers: { Authorization: `Bearer ${authStore.token}` }
         });
         categories.value = res.data.result.data.map((c) => ({
@@ -86,7 +86,7 @@ const submitForm = async () => {
             formData.append('images[0]', productForm.images[0].file);
         }
 
-        const response = await axios.post('https://api.mocfurni.shop/api/system/products', formData, {
+        const response = await apiClient.post('/products', formData, {
             headers: {
                 Authorization: `Bearer ${authStore.token}`,
                 'Content-Type': 'multipart/form-data'

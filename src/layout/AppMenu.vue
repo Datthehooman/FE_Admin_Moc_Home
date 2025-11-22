@@ -47,9 +47,40 @@ const model = ref([
             }
         ]
     },
-
     {
-        items: [{ label: 'Đơn Hàng', icon: 'pi pi-fw pi-shopping-cart', to: '/Orders/List' }]
+        items: [
+            {
+                label: 'Mã giảm giá',
+                icon: 'pi pi-fw pi-tags',
+                items: [
+                    {
+                        label: 'Danh sách mã giảm giá',
+                        icon: 'pi pi-fw pi-box',
+                        to: '/Voucher/List_Voucher'
+                    },
+                    {
+                        label: 'Thêm sản mã giảm giá',
+                        icon: 'pi pi-fw pi-plus',
+                        to: '/Voucher/Add_Voucher'
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        items: [
+            {
+                label: 'Đơn Hàng',
+                icon: 'pi pi-fw pi-shopping-cart',
+                items: [
+                    {
+                        label: 'Danh sách đơn hàng',
+                        icon: 'pi pi-fw pi-box',
+                        to: '/Order/List_Order'
+                    }
+                ]
+            }
+        ]
     },
     {
         items: [{ label: 'Bài Viết', icon: 'pi pi-fw pi-pencil', to: '/Posts/List' }]

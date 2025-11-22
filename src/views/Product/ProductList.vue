@@ -1,4 +1,5 @@
 <script setup>
+import apiClient from '@/api/axios';
 import { FilterMatchMode } from '@primevue/core/api';
 import { onBeforeMount, ref } from 'vue';
 
@@ -11,8 +12,8 @@ import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
 
 import { useAuthStore } from '@/stores/auth';
-import axios from 'axios';
-
+import { useRouter } from 'vue-router';
+const router = useRouter();
 const products = ref([]);
 const filters = ref(null);
 const loading = ref(true);
@@ -28,9 +29,7 @@ onBeforeMount(async () => {
 async function loadProducts() {
     loading.value = true;
     try {
-        const response = await axios.get('https://api.mocfurni.shop/api/system/products', {
-            headers: { Authorization: `Bearer ${authStore.token}` }
-        });
+        const response = await apiClient.get('/products');
         products.value = response.data.result.data || [];
     } catch (err) {
         console.error('Lỗi tải sản phẩm:', err);
@@ -58,7 +57,7 @@ const deleteProduct = async (product) => {
     if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${product.product_name}" không?`)) return;
 
     try {
-        await axios.delete(`https://api.mocfurni.shop/api/system/products/${product.product_id}`, {
+        await apiClient.delete(`/products/${product.product_id}`, {
             headers: { Authorization: `Bearer ${authStore.token}` }
         });
 
@@ -109,7 +108,10 @@ const deleteProduct = async (product) => {
 
             <Column header="Hình ảnh" style="min-width: 8rem">
                 <template #body="{ data }">
-                    <img :src="data.thumbnail" class="w-16 h-16 object-cover rounded shadow" />
+                  <div class="w-16 h-16 flex items-center justify-center rounded shadow">
+  <img :src="data.thumbnail" class="max-h-full max-w-full object-contain p-2" />
+</div>
+
                 </template>
             </Column>
 
@@ -129,18 +131,31 @@ const deleteProduct = async (product) => {
 
             <Column header="Trạng thái" style="min-width: 10rem">
                 <template #body="{ data }">
-                    <Tag :value="data.status === 1 ? 'Hiển thị' : 'Ẩn'" :severity="data.status === 1 ? 'success' : 'danger'" />
+                   <Tag :value="Number(data.status) === 1 ? 'Hiển thị' : 'Ẩn'"
+     :severity="Number(data.status) === 1 ? 'success' : 'danger'" />
+
                 </template>
             </Column>
 
-            <Column header="Hành động" style="min-width: 10rem">
-                <template #body="{ data }">
-                    <div class="flex gap-2">
-                        <Button icon="pi pi-pencil" text severity="primary" />
-                        <Button icon="pi pi-trash" text severity="danger" @click="deleteProduct(data)" />
-                    </div>
-                </template>
-            </Column>
+          <Column header="Hành động" style="min-width: 10rem">
+    <template #body="{ data }">
+        <div class="flex gap-2">
+            <Button
+                icon="pi pi-pencil"
+                text
+                severity="primary"
+                @click="router.push(`/Product/Edit_Product/${data.product_id}`)"
+            />
+            <Button
+                icon="pi pi-trash"
+                text
+                severity="danger"
+                @click="deleteProduct(data)"
+            />
+        </div>
+    </template>
+</Column>
+
         </DataTable>
     </div>
 </template>

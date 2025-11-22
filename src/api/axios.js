@@ -1,38 +1,32 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
-    timeout: 10000
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://api.mocfurni.shop/api/system',
+    timeout: 10000,
+    withCredentials: true
 });
 
-// // Interceptor cho request
-// apiClient.interceptors.request.use(
-//     (config) => {
-//         const authStore = useAuthStore();
-//         if (authStore.token) {
-//             config.headers.Authorization = `Bearer ${authStore.token}`;
-//         }
-//         return config;
-//     },
-//     (error) => Promise.reject(error)
-// );
+// Utility: read cookie by name
+function readCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? decodeURIComponent(match[2]) : null;
+}
 
-// // Interceptor cho response
-// apiClient.interceptors.response.use(
-//     (response) => response,
-//     async (error) => {
-//         const authStore = useAuthStore();
+apiClient.interceptors.request.use((config) => {
+    const hostname = window.location.hostname;
 
-//         // If 401, clear auth and redirect to login
-//         if (error.response && error.response.status === 401) {
-//             authStore.clearAuth();
-//             if (window.location.pathname !== '/auth/login') {
-//                 window.location.href = '/auth/login';
-//             }
-//         }
+    // Detect local dev or production
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('.test');
 
-//         return Promise.reject(error);
-//     }
-// );
+    // Get correct token
+    const token = isLocal ? readCookie('tokenLocal') : readCookie('token');
+
+    if (token) {
+        config.headers = config.headers || {};
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+});
 
 export default apiClient;
