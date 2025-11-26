@@ -6,26 +6,26 @@ import { onBeforeMount, ref } from 'vue';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
-import IconField from 'primevue/iconfield';
-import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
+import MultiSelect from 'primevue/multiselect';
 import Tag from 'primevue/tag';
 
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 const router = useRouter();
+
 const products = ref([]);
 const filters = ref(null);
 const loading = ref(true);
 
 const authStore = useAuthStore();
 
-// Load sản phẩm trước khi mount
 onBeforeMount(async () => {
     await loadProducts();
 });
 
-// Load danh sách sản phẩm
+// Load sản phẩm
 async function loadProducts() {
     loading.value = true;
     try {
@@ -40,20 +40,25 @@ async function loadProducts() {
     }
 }
 
-// Khởi tạo bộ lọc
+// Khởi tạo filter cho từng cột
 function initFilters() {
     filters.value = {
-        global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        product_name: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        stock_quantity: { value: null, matchMode: FilterMatchMode.EQUALS },
+        sold: { value: null, matchMode: FilterMatchMode.EQUALS },
+        view: { value: null, matchMode: FilterMatchMode.EQUALS },
+        status: { value: [], matchMode: FilterMatchMode.IN }
     };
 }
 
-// Format số theo định dạng Việt Nam
+// Format số VN
 function formatNumber(val) {
     return Number(val).toLocaleString('vi-VN');
 }
 
-// Xóa sản phẩm thật sự
-const deleteProduct = async (product) => {
+// Xóa sản phẩm
+async function deleteProduct(product) {
     if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${product.product_name}" không?`)) return;
 
     try {
@@ -61,115 +66,138 @@ const deleteProduct = async (product) => {
             headers: { Authorization: `Bearer ${authStore.token}` }
         });
 
-        // Cập nhật table
-        products.value = products.value.filter((p) => p.product_id !== product.product_id);
-
+        products.value = products.value.filter(p => p.product_id !== product.product_id);
         alert('Xóa sản phẩm thành công!');
     } catch (err) {
         console.error('Lỗi xóa sản phẩm:', err.response || err);
         alert('Xóa sản phẩm thất bại!');
     }
-};
+}
 </script>
 
 <template>
-    <div class="card flex-1">
-        <h2 class="font-semibold text-xl mb-4">Danh Sách Sản Phẩm</h2>
+<div class="card flex-1">
+    <h2 class="font-semibold text-xl mb-4">Danh Sách Sản Phẩm</h2>
 
-        <DataTable
-            :value="products"
-            :paginator="true"
-            :rows="10"
-            dataKey="product_id"
-            v-model:filters="filters"
-            filterDisplay="menu"
-            :loading="loading"
-            :globalFilterFields="['product_name']"
-            showGridlines
-            style="width: 100%"
-            tableStyle="min-width: 60rem"
-            scrollable
-            scrollHeight="500px"
-        >
-            <template #header>
-                <div class="flex justify-between items-center">
-                    <Button type="button" icon="pi pi-filter-slash" label="Xoá lọc" outlined @click="initFilters()" />
-                    <IconField>
-                        <InputIcon>
-                            <i class="pi pi-search" />
-                        </InputIcon>
-                        <InputText v-model="filters.global.value" placeholder="Tìm kiếm sản phẩm..." />
-                    </IconField>
-                </div>
-            </template>
 
-            <template #empty> Không có sản phẩm nào. </template>
-            <template #loading> Đang tải dữ liệu...</template>
+<DataTable
+    :value="products"
+    :paginator="true"
+    :rows="10"
+    dataKey="product_id"
+    v-model:filters="filters"
+    :loading="loading"
+    :globalFilterFields="['product_name']"
+    showGridlines
+    style="width: 100%"
+    tableStyle="min-width: 60rem"
+    scrollable
+    scrollHeight="500px"
+>
+  <template #header>
+    <div class="flex justify-between items-center gap-4">
+        <!-- Dropdown lọc trạng thái -->
+        <MultiSelect
+            v-model="filters.status.value"
+            :options="[
+                { label: 'Hiển thị', value: '1' },
+                { label: 'Ẩn', value: '0' }
+            ]"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Lọc trạng thái"
+            display="chip"
+            class="w-1/4"
+        />
 
-            <Column header="Hình ảnh" style="min-width: 8rem">
-                <template #body="{ data }">
-                  <div class="w-16 h-16 flex items-center justify-center rounded shadow">
-  <img :src="data.thumbnail" class="max-h-full max-w-full object-contain p-2" />
-</div>
-
-                </template>
-            </Column>
-
-            <Column field="product_name" header="Tên sản phẩm" style="min-width: 14rem"></Column>
-
-            <Column field="stock" header="Tồn kho" style="min-width: 8rem">
-                <template #body="{ data }">
-                    {{ formatNumber(data.stock_quantity) }}
-                </template>
-            </Column>
-
-            <Column field="views" header="Lượt xem" style="min-width: 8rem">
-                <template #body="{ data }">
-                    {{ formatNumber(data.view) }}
-                </template>
-            </Column>
-
-            <Column header="Trạng thái" style="min-width: 10rem">
-                <template #body="{ data }">
-                   <Tag :value="Number(data.status) === 1 ? 'Hiển thị' : 'Ẩn'"
-     :severity="Number(data.status) === 1 ? 'success' : 'danger'" />
-
-                </template>
-            </Column>
-
-          <Column header="Hành động" style="min-width: 10rem">
-    <template #body="{ data }">
-        <div class="flex gap-2">
-            <Button
-                icon="pi pi-pencil"
-                text
-                severity="primary"
-                @click="router.push(`/Product/Edit_Product/${data.product_id}`)"
-            />
-            <Button
-                icon="pi pi-trash"
-                text
-                severity="danger"
-                @click="deleteProduct(data)"
-            />
-        </div>
-    </template>
-</Column>
-
-        </DataTable>
+        <!-- Tìm kiếm global -->
+        <InputText
+            v-model="filters.global.value"
+            placeholder="Tìm kiếm..."
+            class="border p-1 rounded w-1/4"
+        />
     </div>
 </template>
 
+    <template #empty> Không có sản phẩm nào. </template>
+    <template #loading> Đang tải dữ liệu...</template>
+
+    <!-- Hình ảnh -->
+    <Column header="Hình ảnh" style="min-width: 8rem">
+        <template #body="{ data }">
+            <div class="w-16 h-16 flex items-center justify-center rounded shadow">
+                <img :src="data.thumbnail" class="max-h-full max-w-full object-contain p-2" />
+            </div>
+        </template>
+    </Column>
+
+    <!-- Tên sản phẩm -->
+    <Column field="product_name" header="Tên sản phẩm" sortable>
+        <template #body="{ data }">{{ data.product_name }}</template>
+        <template #filter="{ filterModel }">
+            <InputText v-model="filterModel.value" placeholder="Tìm kiếm tên sản phẩm" />
+        </template>
+    </Column>
+
+    <!-- Tồn kho -->
+    <Column field="stock_quantity" header="Tồn kho" sortable>
+        <template #body="{ data }">{{ formatNumber(data.stock_quantity) }}</template>
+        <template #filter="{ filterModel }">
+            <InputNumber v-model="filterModel.value" mode="decimal" placeholder="Tồn kho" />
+        </template>
+    </Column>
+
+    <!-- Đã bán -->
+    <Column field="sold" header="Đã bán" sortable>
+        <template #body="{ data }">{{ formatNumber(data.sold) }}</template>
+        <template #filter="{ filterModel }">
+            <InputNumber v-model="filterModel.value" mode="decimal" placeholder="Đã bán" />
+        </template>
+    </Column>
+
+    <!-- Lượt xem -->
+    <Column field="view" header="Lượt xem" sortable>
+        <template #body="{ data }">{{ formatNumber(data.view) }}</template>
+        <template #filter="{ filterModel }">
+            <InputNumber v-model="filterModel.value" mode="decimal" placeholder="Lượt xem" />
+        </template>
+    </Column>
+
+    <!-- Trạng thái -->
+    <Column field="status" header="Trạng thái" sortable>
+        <template #body="{ data }">
+            <Tag :value="Number(data.status) === 1 ? 'Hiển thị' : 'Ẩn'"
+                 :severity="Number(data.status) === 1 ? 'success' : 'danger'" />
+        </template>
+        <template #filter="{ filterModel }">
+            <MultiSelect
+                v-model="filterModel.value"
+                :options="[ { label: 'Hiển thị', value: 1 }, { label: 'Ẩn', value: 0 } ]"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Chọn trạng thái"
+                display="chip"
+                class="w-full"
+            />
+        </template>
+    </Column>
+
+    <!-- Hành động -->
+    <Column header="Hành động" style="min-width: 10rem">
+        <template #body="{ data }">
+            <div class="flex gap-2">
+                <Button icon="pi pi-pencil" text severity="primary" @click="router.push(`/Product/Edit_Product/${data.product_id}`)" />
+                <Button icon="pi pi-trash" text severity="danger" @click="deleteProduct(data)" />
+            </div>
+        </template>
+    </Column>
+</DataTable>
+
+
+</div>
+</template>
+
 <style scoped lang="scss">
-:deep(.p-datatable-frozen-tbody) {
-    font-weight: bold;
-}
-
-:deep(.p-datatable-scrollable .p-frozen-column) {
-    font-weight: bold;
-}
-
-/* Đảm bảo bảng co giãn theo container */
 .card.flex-1 {
     width: 100%;
     display: flex;

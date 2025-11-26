@@ -8,6 +8,7 @@ import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
+import MultiSelect from 'primevue/multiselect';
 
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
@@ -41,10 +42,13 @@ async function loadCategories() {
     }
 }
 
-// Khởi tạo bộ lọc
+// Khởi tạo filter cho từng cột
 function initFilters() {
     filters.value = {
-        global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        category_name: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        description: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        is_active: { value: [], matchMode: FilterMatchMode.IN }
     };
 }
 
@@ -68,65 +72,101 @@ const deleteCategory = async (category) => {
 </script>
 
 <template>
-    <div class="card flex-1">
-        <h2 class="font-semibold text-xl mb-4">Danh Sách Danh Mục</h2>
+<div class="card flex-1">
+    <h2 class="font-semibold text-xl mb-4">Danh Sách Danh Mục</h2>
 
-        <DataTable
-            :value="categories"
-            :paginator="true"
-            :rows="10"
-            dataKey="id"
-            v-model:filters="filters"
-            filterDisplay="menu"
-            :loading="loading"
-            :globalFilterFields="['category_name', 'description']"
-            showGridlines
-            scrollable
-            scrollHeight="500px"
-            rowHover
-            tableStyle="min-width: 60rem"
-        >
-            <template #header>
-                <div class="flex justify-between items-center gap-4">
-                    <Button type="button" icon="pi pi-filter-slash" label="Xoá lọc" outlined @click="initFilters()" />
-                    <div class="flex items-center gap-2 border rounded px-2 py-1 bg-white shadow-sm">
-                        <i class="pi pi-search text-gray-400"></i>
-                        <InputText v-model="filters.global.value" placeholder="Tìm kiếm danh mục..." class="border-none outline-none" />
-                    </div>
+    <DataTable
+        :value="categories"
+        :paginator="true"
+        :rows="10"
+        dataKey="id"
+        v-model:filters="filters"
+        :loading="loading"
+        :globalFilterFields="['category_name', 'description']"
+        showGridlines
+        scrollable
+        scrollHeight="500px"
+        rowHover
+        tableStyle="min-width: 60rem"
+    >
+        <!-- HEADER với MultiSelect filter trạng thái + global search -->
+        <template #header>
+            <div class="flex justify-between items-center gap-4">
+                <!-- Filter trạng thái -->
+                <MultiSelect
+                    v-model="filters.is_active.value"
+                    :options="[ { label: 'Hiển thị', value: 1 }, { label: 'Ẩn', value: 0 } ]"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Lọc trạng thái"
+                    display="chip"
+                    class="w-1/4"
+                    :showSelectAll="true"
+                    metaKeySelection="false"
+                />
+
+                <!-- Global search -->
+                <InputText
+                    v-model="filters.global.value"
+                    placeholder="Tìm kiếm danh mục..."
+                    class="border p-1 rounded w-1/4"
+                />
+            </div>
+        </template>
+
+        <template #empty> Không có danh mục nào. </template>
+        <template #loading> Đang tải dữ liệu...</template>
+
+        <!-- Tên danh mục -->
+        <Column field="category_name" header="Tên danh mục" sortable>
+            <template #body="{ data }">{{ data.category_name }}</template>
+            <template #filter="{ filterModel }">
+                <InputText v-model="filterModel.value" placeholder="Tìm kiếm tên danh mục" />
+            </template>
+        </Column>
+
+        <!-- Mô tả -->
+        <Column field="description" header="Mô tả" sortable>
+            <template #body="{ data }">{{ data.description }}</template>
+            <template #filter="{ filterModel }">
+                <InputText v-model="filterModel.value" placeholder="Tìm kiếm mô tả" />
+            </template>
+        </Column>
+
+        <!-- Trạng thái -->
+        <Column field="is_active" header="Trạng thái" sortable>
+            <template #body="{ data }">
+                <Tag
+                    :value="Number(data.is_active) === 1 ? 'Hiển thị' : 'Ẩn'"
+                    :severity="Number(data.is_active) === 1 ? 'success' : 'danger'"
+                />
+            </template>
+            <template #filter="{ filterModel }">
+                <MultiSelect
+                    v-model="filterModel.value"
+                    :options="[ { label: 'Hiển thị', value: 1 }, { label: 'Ẩn', value: 0 } ]"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Chọn trạng thái"
+                    display="chip"
+                    class="w-full"
+                    :showSelectAll="true"
+                    metaKeySelection="false"
+                />
+            </template>
+        </Column>
+
+        <!-- Hành động -->
+        <Column header="Hành động" style="min-width: 10rem">
+            <template #body="{ data }">
+                <div class="flex gap-2">
+                    <Button icon="pi pi-pencil" text severity="primary" @click="router.push(`/Category/Edit_Category/${data.id}`)" />
+                    <Button icon="pi pi-trash" text severity="danger" @click="deleteCategory(data)" />
                 </div>
             </template>
-
-            <template #empty> Không có danh mục nào. </template>
-            <template #loading> Đang tải dữ liệu...</template>
-
-            <Column header="Hình ảnh" style="min-width: 8rem">
-                <template #body="{ data }">
-                    <img :src="data.full_image_url" class="w-16 h-16 object-cover rounded shadow" />
-                </template>
-            </Column>
-
-            <Column field="category_name" header="Tên danh mục" style="min-width: 14rem"></Column>
-            <Column field="description" header="Mô tả" style="min-width: 20rem"></Column>
-
-            <Column header="Trạng thái" style="min-width: 10rem">
-                <template #body="{ data }">
-                  <Tag
-  :value="Number(data.is_active) === 1 ? 'Hiện' : 'Ẩn'"
-  :severity="Number(data.is_active) === 1 ? 'success' : 'danger'"
-/>
-                </template>
-            </Column>
-
-            <Column header="Hành động" style="min-width: 10rem">
-                <template #body="{ data }">
-                    <div class="flex gap-2">
-                        <Button icon="pi pi-pencil" text severity="primary" @click="router.push(`/Category/Edit_Category/${data.id}`)" />
-                        <Button icon="pi pi-trash" text severity="danger" @click="deleteCategory(data)" />
-                    </div>
-                </template>
-            </Column>
-        </DataTable>
-    </div>
+        </Column>
+    </DataTable>
+</div>
 </template>
 
 <style scoped lang="scss">
@@ -135,7 +175,6 @@ const deleteCategory = async (category) => {
     white-space: nowrap;
 }
 
-/* Đảm bảo bảng co giãn theo container */
 .card.flex-1 {
     width: 100%;
     display: flex;

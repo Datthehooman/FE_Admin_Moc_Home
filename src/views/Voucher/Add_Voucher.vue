@@ -68,7 +68,18 @@
   <!-- Status -->
   <div>
     <label class="block text-gray-700 font-medium mb-1">Trạng thái</label>
-    <Dropdown v-model="voucherForm.status" :options="['Hoạt động','Ngưng hoạt động']" placeholder="Chọn trạng thái" class="w-full" />
+  <Dropdown
+    v-model="voucherForm.status"
+    :options="[
+        { label: 'Hoạt động', value: 'active' },
+        { label: 'Ngưng hoạt động', value: 'inactive' }
+    ]"
+    optionLabel="label"
+    optionValue="value"
+    placeholder="Chọn trạng thái"
+    class="w-full"
+/>
+
     <span v-if="errors.status" class="text-red-600 text-sm">{{ errors.status }}</span>
   </div>
 
@@ -156,7 +167,8 @@ const submitForm = async () => {
       min_order_value: voucherForm.min_order_value,
       max_discount_amount: voucherForm.max_discount_amount,
       description: description.value,
-      status: voucherForm.status === 'Hoạt động' ? 1 : 0
+      status: voucherForm.status
+
     };
     const response = await apiClient.post('/voucher', payload);
     alert('Thêm voucher thành công!');

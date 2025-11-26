@@ -5,9 +5,9 @@ import { onBeforeMount, ref } from 'vue';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
-import IconField from 'primevue/iconfield';
-import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
+import MultiSelect from 'primevue/multiselect';
 import Tag from 'primevue/tag';
 
 import apiClient from '@/api/axios';
@@ -18,14 +18,9 @@ const vouchers = ref([]);
 const filters = ref(null);
 const loading = ref(true);
 
-// Load voucher trước khi mount
-onBeforeMount(() => {
-    loadVouchers(); // không await trực tiếp
-});
-
 // Load danh sách voucher
-onBeforeMount(() => {
-    loadVouchers(); // không await trực tiếp
+onBeforeMount(async () => {
+    await loadVouchers();
 });
 
 async function loadVouchers() {
@@ -42,10 +37,16 @@ async function loadVouchers() {
     }
 }
 
-// Khởi tạo bộ lọc
+// Khởi tạo filter cho từng cột
 function initFilters() {
     filters.value = {
-        global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        code: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        discount_value: { value: null, matchMode: FilterMatchMode.EQUALS },
+        start_date: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        end_date: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        status: { value: [], matchMode: FilterMatchMode.IN },
+        description: { value: null, matchMode: FilterMatchMode.CONTAINS }
     };
 }
 
@@ -60,10 +61,7 @@ const deleteVoucher = async (voucher) => {
 
     try {
         await apiClient.delete(`/voucher/${voucher.id}`);
-
-        // Xóa voucher khỏi danh sách local ngay lập tức
         vouchers.value = vouchers.value.filter((v) => v.id !== voucher.id);
-
         alert(`✅ Xóa voucher "${voucher.code}" thành công!`);
     } catch (err) {
         console.error('❌ Lỗi xóa voucher:', err.response?.data || err);
@@ -73,80 +71,129 @@ const deleteVoucher = async (voucher) => {
 </script>
 
 <template>
-    <div class="card flex-1">
-        <h2 class="font-semibold text-xl mb-4">Danh Sách Voucher</h2>
+<div class="card flex-1">
+    <h2 class="font-semibold text-xl mb-4">Danh Sách Voucher</h2>
 
-        <DataTable
-            :value="vouchers"
-            :paginator="true"
-            :rows="10"
-            dataKey="id"
-            v-model:filters="filters"
-            filterDisplay="menu"
-            :loading="loading"
-            :globalFilterFields="['code', 'description']"
-            showGridlines
-            scrollable
-            scrollHeight="500px"
-            rowHover
-            tableStyle="min-width: 60rem"
-        >
-            <template #header>
-                <div class="flex justify-between items-center">
-                    <Button type="button" icon="pi pi-filter-slash" label="Xoá lọc" outlined @click="initFilters()" />
-                    <IconField>
-                        <InputIcon>
-                            <i class="pi pi-search" />
-                        </InputIcon>
-                        <InputText v-model="filters.global.value" placeholder="Tìm kiếm voucher..." />
-                    </IconField>
-                </div>
-            </template>
 
-            <template #empty> Không có voucher nào. </template>
-            <template #loading> Đang tải dữ liệu...</template>
+<DataTable
+    :value="vouchers"
+    :paginator="true"
+    :rows="10"
+    dataKey="id"
+    v-model:filters="filters"
+    :loading="loading"
+    :globalFilterFields="['code', 'description', 'status']"
+    showGridlines
+    scrollable
+    scrollHeight="500px"
+    rowHover
+    tableStyle="min-width: 60rem"
+>
+<template #header>
+    <div class="flex justify-between items-center gap-4">
+        <!-- Dropdown lọc trạng thái -->
+        <MultiSelect
+            v-model="filters.status.value"
+            :options="[
+                { label: 'Hoạt động', value: 'active' },
+                { label: 'Ngưng hoạt động', value: 'inactive' }
+            ]"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Lọc trạng thái"
+            display="chip"
+            class="w-1/4"
+        />
 
-            <Column field="code" header="Mã voucher" style="min-width: 12rem"></Column>
-            <Column field="discount_value" header="Giá trị" style="min-width: 8rem">
-                <template #body="{ data }">
-                    {{ data.discount_type === 'percent' ? data.discount_value + '%' : formatNumber(data.discount_value) + '₫' }}
-                </template>
-            </Column>
-            <Column field="start_date" header="Bắt đầu" style="min-width: 8rem">
-                <template #body="{ data }">
-                    {{ new Date(data.start_date).toLocaleDateString('vi-VN') }}
-                </template>
-            </Column>
-
-            <Column field="end_date" header="Kết thúc" style="min-width: 8rem">
-                <template #body="{ data }">
-                    {{ new Date(data.end_date).toLocaleDateString('vi-VN') }}
-                </template>
-            </Column>
-
-            <Column header="Trạng thái" style="min-width: 10rem">
-                <template #body="{ data }">
-                    <Tag :value="Number(data.status) === 1 ? 'Hoạt động' : 'Ngưng hoạt động'" :severity="Number(data.status) === 1 ? 'success' : 'danger'" />
-                </template>
-            </Column>
-            <Column field="description" header="Mô tả" style="min-width: 20rem">
-                <template #body="{ data }">
-                    <div style="white-space: normal; word-break: break-word">
-                        {{ data.description }}
-                    </div>
-                </template>
-            </Column>
-
-            <Column header="Hành động" style="min-width: 10rem">
-                <template #body="{ data }">
-                    <div class="flex gap-2">
-                        <Button icon="pi pi-pencil" text severity="primary" @click="router.push(`/Voucher/Edit_Voucher/${data.id}`)" />
-                        <Button icon="pi pi-trash" text severity="danger" @click="deleteVoucher(data)" />
-                    </div>
-                </template>
-            </Column>
-        </DataTable>
+        <!-- Tìm kiếm global -->
+        <InputText
+            v-model="filters.global.value"
+            placeholder="Tìm kiếm voucher..."
+            class="border p-1 rounded w-1/4"
+        />
     </div>
+</template>
+
+
+    <template #empty> Không có voucher nào. </template>
+    <template #loading> Đang tải dữ liệu...</template>
+
+    <!-- Mã voucher -->
+    <Column field="code" header="Mã voucher" sortable>
+        <template #body="{ data }">{{ data.code }}</template>
+        <template #filter="{ filterModel }">
+            <InputText v-model="filterModel.value" placeholder="Tìm kiếm mã voucher" />
+        </template>
+    </Column>
+
+    <!-- Giá trị -->
+    <Column field="discount_value" header="Giá trị" sortable>
+        <template #body="{ data }">
+            {{ data.discount_type === 'percent' ? data.discount_value + '%' : formatNumber(data.discount_value) + '₫' }}
+        </template>
+        <template #filter="{ filterModel }">
+            <InputNumber v-model="filterModel.value" mode="decimal" placeholder="Giá trị" />
+        </template>
+    </Column>
+
+    <!-- Bắt đầu -->
+    <Column field="start_date" header="Bắt đầu" sortable>
+        <template #body="{ data }">{{ new Date(data.start_date).toLocaleDateString('vi-VN') }}</template>
+        <template #filter="{ filterModel }">
+            <InputText v-model="filterModel.value" placeholder="Bắt đầu" />
+        </template>
+    </Column>
+
+    <!-- Kết thúc -->
+    <Column field="end_date" header="Kết thúc" sortable>
+        <template #body="{ data }">{{ new Date(data.end_date).toLocaleDateString('vi-VN') }}</template>
+        <template #filter="{ filterModel }">
+            <InputText v-model="filterModel.value" placeholder="Kết thúc" />
+        </template>
+    </Column>
+
+    <!-- Trạng thái -->
+    <Column field="status" header="Trạng thái" sortable>
+        <template #body="{ data }">
+            <Tag :value="data.status === 'active' ? 'Hoạt động' : 'Ngưng hoạt động'"
+                 :severity="data.status === 'active' ? 'success' : 'danger'" />
+        </template>
+        <template #filter="{ filterModel }">
+            <MultiSelect
+                v-model="filterModel.value"
+                :options="[ { label: 'Hoạt động', value: 'active' }, { label: 'Ngưng hoạt động', value: 'inactive' } ]"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Chọn trạng thái"
+                display="chip"
+                class="w-full"
+            />
+        </template>
+    </Column>
+
+    <!-- Mô tả -->
+    <Column field="description" header="Mô tả" sortable>
+        <template #body="{ data }">
+            <div style="white-space: normal; word-break: break-word">{{ data.description }}</div>
+        </template>
+        <template #filter="{ filterModel }">
+            <InputText v-model="filterModel.value" placeholder="Tìm kiếm mô tả" />
+        </template>
+    </Column>
+
+    <!-- Hành động -->
+    <Column header="Hành động" style="min-width: 10rem">
+        <template #body="{ data }">
+            <div class="flex gap-2">
+                <Button icon="pi pi-pencil" text severity="primary" @click="router.push(`/Voucher/Edit_Voucher/${data.id}`)" />
+                <Button icon="pi pi-trash" text severity="danger" @click="deleteVoucher(data)" />
+            </div>
+        </template>
+    </Column>
+</DataTable>
+
+
+</div>
 </template>
 
 <style scoped lang="scss">
