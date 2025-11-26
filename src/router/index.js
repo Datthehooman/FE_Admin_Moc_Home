@@ -208,30 +208,30 @@ const router = createRouter({
     ]
 });
 
-// router.beforeEach(async (to, from, next) => {
-//     const auth = useAuthStore();
+router.beforeEach((to, from, next) => {
+    // Utility: read cookie
+    function readCookie(name) {
+        const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? decodeURIComponent(match[2]) : null;
+    }
 
-//     // Public routes that do NOT require login
-//     const publicRoutes = ['login', 'Login', 'Register', 'landing', 'notfound'];
-//     const isPublic = publicRoutes.includes(to.name);
+    const hostname = window.location.hostname;
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('.test');
 
-//     // Not logged in → go to login
-//     if (!auth.isAuthenticated && !isPublic) {
-//         return next('/auth/login');
-//     }
+    const token = isLocal ? readCookie('tokenLocal') : readCookie('token');
+    const role = isLocal ? readCookie('roleLocal') : readCookie('role');
 
-//     // If logged in but user info not loaded → fetch
-//     if (auth.isAuthenticated && !auth.user) {
-//         try {
-//             await auth.fetchUser();
-//         } catch (error) {
-//             // Token expired or invalid → logout → redirect login
-//             auth.clearAuth();
-//             return next('/auth/login');
-//         }
-//     }
+    if (!token) {
+        window.location.href = 'https://mocfurni.shop/error';
+        return;
+    }
 
-//     next();
-// });
+    if (to.meta.requiresAdmin && role !== '1') {
+        window.location.href = 'https://mocfurni.shop/error';
+        return;
+    }
+
+    next();
+});
 
 export default router;
