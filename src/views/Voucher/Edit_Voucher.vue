@@ -35,7 +35,7 @@ const loadVoucher = async () => {
         const v = res.data.result.data;
         voucherForm.discount_value = Number(v.discount_value) || 0;
         voucherForm.end_date = v.end_date ?? null;
-        voucherForm.status = Number(v.status) ?? 0;
+        voucherForm.status = v.status ?? 'inactive';
         voucherForm.code = v.code ?? '';
     } catch (err) {
         console.error('Lỗi tải voucher:', err);
@@ -112,16 +112,18 @@ onMounted(() => {
             <!-- Status -->
             <div class="flex flex-col gap-1 w-full">
                 <label>Trạng thái</label>
-                <Dropdown
-                    v-model="voucherForm.status"
-                    :options="[
-                        { label: 'Hiện', value: 1 },
-                        { label: 'Ẩn', value: 0 }
-                    ]"
-                    optionLabel="label"
-                    optionValue="value"
-                    class="w-full"
-                />
+               <Dropdown
+    v-model="voucherForm.status"
+    :options="[
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' }
+    ]"
+    optionLabel="label"
+    optionValue="value"
+    placeholder="Chọn trạng thái"
+    class="w-full"
+/>
+
                 <span v-if="errors.status" class="text-red-600 text-sm">{{ errors.status }}</span>
             </div>
 
