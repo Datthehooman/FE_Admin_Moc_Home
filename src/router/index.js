@@ -86,6 +86,16 @@ const router = createRouter({
                     component: () => import('@/views/Order/Detail_Order.vue')
                 },
                 {
+                    path: '/Customers/List_Customer',
+                    name: 'List_Customer',
+                    component: () => import('@/views/Customer/List_Customer.vue')
+                },
+                {
+                    path: '/Customers/List_Customer/:id',
+                    name: 'Detail_Customer',
+                    component: () => import('@/views/Customer/Detail_Customer.vue')
+                },
+                {
                     path: '/uikit/formlayout',
                     name: 'formlayout',
                     component: () => import('@/views/uikit/FormLayout.vue')
