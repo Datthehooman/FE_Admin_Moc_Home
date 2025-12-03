@@ -208,7 +208,7 @@ const router = createRouter({
     ]
 });
 
-// router.beforeEach(async (to, from, next) => {
+// router.beforeEach(a  sync (to, from, next) => {
 //     const auth = useAuthStore();
 
 //     // Public routes that do NOT require login
