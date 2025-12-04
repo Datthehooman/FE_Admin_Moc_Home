@@ -17,9 +17,20 @@ const router = useRouter();
 const orders = ref([]);
 const filters = ref(null);
 const loading = ref(true);
+const multiSortMeta = ref([{ field: 'order_status', order: -1 }]);
 
 const orderStatuses = ['pending', 'confirmed', 'processing', 'shipping', 'completed', 'cancelled'];
 const paymentStatuses = ['paid', 'unpaid'];
+
+// Define sort order for statuses (earlier in array = higher priority)
+const statusSortOrder = {
+    pending: 0,
+    confirmed: 1,
+    processing: 2,
+    shipping: 3,
+    completed: 4,
+    cancelled: 5
+};
 
 const orderStatusLabels = {
     pending: 'Chờ xác nhận',
@@ -50,12 +61,33 @@ async function loadOrders() {
                 order.order_date = new Date(order.order_date);
             }
         });
+        // Sort by order status automatically
+        sortByOrderStatus();
     } catch (err) {
         console.error('Lỗi tải đơn hàng:', err);
         orders.value = [];
     } finally {
         loading.value = false;
         initFilters();
+    }
+}
+
+function sortByOrderStatus() {
+    orders.value.sort((a, b) => {
+        const statusA = statusSortOrder[a.order_status] ?? 999;
+        const statusB = statusSortOrder[b.order_status] ?? 999;
+        return statusA - statusB;
+    });
+}
+
+function onSort(event) {
+    // Custom sort handler to respect statusSortOrder
+    if (event.sortField === 'order_status') {
+        orders.value.sort((a, b) => {
+            const statusA = statusSortOrder[a.order_status] ?? 999;
+            const statusB = statusSortOrder[b.order_status] ?? 999;
+            return event.sortOrder === 1 ? statusA - statusB : statusB - statusA;
+        });
     }
 }
 
@@ -68,6 +100,8 @@ const updateOrderStatus = async (order, newStatus) => {
         });
 
         order.order_status = newStatus;
+        // Re-sort after status update
+        sortByOrderStatus();
         alert('✅ Cập nhật trạng thái thành công!');
     } catch (err) {
         console.error('❌ Lỗi cập nhật trạng thái:', err.response?.data || err);
@@ -138,6 +172,8 @@ function getStatusSeverity(status) {
             tableStyle="min-width: 70rem"
             sortMode="multiple"
             :removableSort="true"
+            v-model:multiSortMeta="multiSortMeta"
+            @sort="onSort"
         >
             <!-- HEADER -->
             <template #header>
