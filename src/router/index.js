@@ -86,6 +86,36 @@ const router = createRouter({
                     component: () => import('@/views/Order/Detail_Order.vue')
                 },
                 {
+                    path: 'Article/List_Article',
+                    name: 'List_Article',
+                    component: () => import('@/views/Article/List_Article.vue')
+                },
+                {
+                    path: 'Article/Add_Article',
+                    name: 'Add_Article',
+                    component: () => import('@/views/Article/Add_Article.vue')
+                },
+                {
+                    path: 'Article/Edit_Article/:id',
+                    name: 'Edit_Article',
+                    component: () => import('@/views/Article/Edit_Article.vue')
+                },
+                {
+                    path: 'Article_Category/List_Article_Category',
+                    name: 'List_Article_Category',
+                    component: () => import('@/views/Article_Category/List_Article_Category.vue')
+                },
+                {
+                    path: 'Article_Category/Add_Article_Category',
+                    name: 'Add_Article_Category',
+                    component: () => import('@/views/Article_Category/Add_Article_Category.vue')
+                },
+                {
+                    path: 'Article_Category/Edit_Article_Category/:id',
+                    name: 'Edit_Article_Category',
+                    component: () => import('@/views/Article_Category/Edit_Article_Category.vue')
+                },
+                {
                     path: '/uikit/formlayout',
                     name: 'formlayout',
                     component: () => import('@/views/uikit/FormLayout.vue')
