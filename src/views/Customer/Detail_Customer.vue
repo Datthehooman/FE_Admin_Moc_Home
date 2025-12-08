@@ -19,8 +19,8 @@ const loading = ref(true);
 const userStatuses = ['0', '1'];
 
 const userStatusLabels = {
-    '0': 'Inactive',
-    '1': 'Active'
+    0: 'Inactive',
+    1: 'Active'
 };
 
 // LOAD CUSTOMER DETAIL
@@ -66,8 +66,8 @@ function getStatusLabel(status) {
 
 function getStatusSeverity(status) {
     const severityMap = {
-        '0': 'danger',
-        '1': 'success'
+        0: 'danger',
+        1: 'success'
     };
     return severityMap[status] || 'secondary';
 }
