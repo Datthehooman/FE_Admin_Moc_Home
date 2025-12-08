@@ -1,12 +1,19 @@
 <script setup>
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
+import Button from 'primevue/button';
 import Card from 'primevue/card';
-import Dropdown from 'primevue/dropdown';
+import ConfirmPopup from 'primevue/confirmpopup';
 import Tag from 'primevue/tag';
 
 import apiClient from '@/api/axios';
+
+// TOAST & CONFIRM
+const toast = useToast();
+const confirm = useConfirm();
 
 // ROUTER
 const route = useRoute();
@@ -15,13 +22,6 @@ const userId = route.params.id;
 // DATA
 const customer = ref(null);
 const loading = ref(true);
-
-const userStatuses = ['0', '1'];
-
-const userStatusLabels = {
-    0: 'Inactive',
-    1: 'Active'
-};
 
 // LOAD CUSTOMER DETAIL
 async function loadCustomerDetail() {
@@ -40,64 +40,76 @@ onMounted(() => loadCustomerDetail());
 // FORMAT NUMBER
 const formatNumber = (n) => Number(n).toLocaleString('vi-VN');
 
-// UPDATE STATUS
-const updateStatus = async (newStatus) => {
-    if (!confirm(`Thay đổi trạng thái khách hàng sang "${userStatusLabels[newStatus]}"?`)) return;
-
-    try {
-        await apiClient.post(`/customer/${userId}/update-status`, {
-            status: newStatus
-        });
-
-        customer.value.status = newStatus;
-        alert('✅ Cập nhật trạng thái thành công!');
-    } catch (err) {
-        alert('❌ Lỗi cập nhật trạng thái!');
-    }
-};
-
 function formatDate(v) {
     return new Date(v).toLocaleDateString('vi-VN');
 }
 
-function getStatusLabel(status) {
-    return userStatusLabels[status] || status;
-}
+// BLACKLIST ACTIONS
+const toggleBlacklist = (event) => {
+    const endpoint = customer.value.is_blacklisted ? `/customer/${userId}/unblacklist` : `/customer/${userId}/blacklist`;
+    const actionText = customer.value.is_blacklisted ? 'xoá khỏi' : 'thêm vào';
 
-function getStatusSeverity(status) {
-    const severityMap = {
-        0: 'danger',
-        1: 'success'
-    };
-    return severityMap[status] || 'secondary';
-}
+    confirm.require({
+        target: event.currentTarget,
+        message: `Bạn chắc chắn muốn ${actionText} danh sách đen khách hàng này?`,
+        icon: 'pi pi-exclamation-triangle',
+        rejectProps: {
+            label: 'Huỷ',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Xác nhận'
+        },
+        accept: async () => {
+            try {
+                await apiClient.post(endpoint);
+                customer.value.is_blacklisted = !customer.value.is_blacklisted;
+                toast.add({
+                    severity: 'success',
+                    summary: 'Thành công',
+                    detail: `${actionText === 'xoá khỏi' ? 'Xoá khỏi' : 'Thêm vào'} danh sách đen thành công!`,
+                    life: 3000
+                });
+            } catch (err) {
+                console.error('❌ Lỗi cập nhật danh sách đen:', err.response?.data || err);
+                toast.add({
+                    severity: 'error',
+                    summary: 'Lỗi',
+                    detail: 'Lỗi cập nhật danh sách đen!',
+                    life: 3000
+                });
+            }
+        },
+        reject: () => {
+            // User rejected, do nothing
+        }
+    });
+};
 </script>
 
 <template>
     <div class="p-4" v-if="customer">
+        <ConfirmPopup></ConfirmPopup>
         <h2 class="text-2xl font-semibold mb-4">Chi tiết khách hàng #{{ customer.user_id }}</h2>
-
-        <!-- STATUS + DROPDOWN -->
-        <Card class="mb-4">
-            <template #title>Trạng thái khách hàng</template>
-            <template #content>
-                <div class="flex items-center gap-4">
-                    <Tag :value="getStatusLabel(customer.status)" :severity="getStatusSeverity(customer.status)" class="capitalize" />
-
-                    <Dropdown :options="userStatuses" v-model="customer.status" class="capitalize w-56" @change="updateStatus(customer.status)" />
-                </div>
-            </template>
-        </Card>
 
         <!-- CUSTOMER INFO -->
         <Card class="mb-4">
             <template #title>Thông tin khách hàng</template>
             <template #content>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><strong>Tên khách:</strong> {{ customer.full_name }}</div>
-                    <div><strong>SĐT:</strong> {{ customer.phone || 'Chưa cập nhật' }}</div>
-                    <div><strong>Email:</strong> {{ customer.email }}</div>
-                    <div><strong>Địa chỉ:</strong> {{ customer.address || 'Chưa cập nhật' }}</div>
+                    <div>
+                        <strong>Tên khách:</strong> <span class="ml-2">{{ customer.full_name }}</span>
+                    </div>
+                    <div>
+                        <strong>SĐT:</strong> <span class="ml-2">{{ customer.phone || 'Chưa cập nhật' }}</span>
+                    </div>
+                    <div>
+                        <strong>Email:</strong> <span class="ml-2">{{ customer.email }}</span>
+                    </div>
+                    <div>
+                        <strong>Địa chỉ:</strong> <span class="ml-2">{{ customer.address || 'Chưa cập nhật' }}</span>
+                    </div>
                 </div>
             </template>
         </Card>
@@ -109,11 +121,17 @@ function getStatusSeverity(status) {
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <strong>Ngày tạo:</strong>
-                        {{ formatDate(customer.created_at) }}
+                        <span class="ml-2">{{ formatDate(customer.created_at) }}</span>
                     </div>
-                    <div><strong>Vai trò:</strong> {{ customer.role }}</div>
-                    <div><strong>Google ID:</strong> {{ customer.google_id || 'N/A' }}</div>
-                    <div><strong>Cập nhật lần cuối:</strong> {{ formatDate(customer.updated_at) }}</div>
+                    <div>
+                        <strong>Vai trò:</strong> <span class="ml-2">{{ customer.role }}</span>
+                    </div>
+                    <div>
+                        <strong>Google ID:</strong> <span class="ml-2">{{ customer.google_id || 'N/A' }}</span>
+                    </div>
+                    <div>
+                        <strong>Cập nhật lần cuối:</strong> <span class="ml-2">{{ formatDate(customer.updated_at) }}</span>
+                    </div>
                 </div>
             </template>
         </Card>
@@ -125,36 +143,50 @@ function getStatusSeverity(status) {
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <strong>Tổng đơn hàng:</strong>
-                        <span class="text-xl font-semibold text-primary">{{ customer.total_orders }}</span>
+                        <span class="text-xl font-semibold text-primary ml-2">{{ customer.total_orders }}</span>
                     </div>
                     <div>
                         <strong>Đơn hàng thành công:</strong>
-                        <span class="text-xl font-semibold text-success">{{ customer.success_orders_count }}</span>
+                        <span class="text-xl font-semibold text-success ml-2">{{ customer.success_orders_count }}</span>
                     </div>
                     <div>
                         <strong>Đơn hàng thất bại:</strong>
-                        <span class="text-xl font-semibold text-danger">{{ customer.failed_orders_count }}</span>
+                        <span class="text-xl font-semibold text-danger ml-2">{{ customer.failed_orders_count }}</span>
                     </div>
                     <div>
                         <strong>Tỷ lệ thành công:</strong>
-                        <span class="text-xl font-semibold text-info">{{ (customer.success_rate * 100).toFixed(2) }}%</span>
+                        <span class="text-xl font-semibold text-info ml-2">{{ (customer.success_rate * 100).toFixed(2) }}%</span>
                     </div>
                     <div>
                         <strong>Tổng giá trị:</strong>
-                        <span class="text-xl font-semibold text-primary">{{ customer.lifetime_value ? formatNumber(customer.lifetime_value) + '₫' : 'N/A' }}</span>
+                        <span class="text-xl font-semibold text-primary ml-2">{{ customer.lifetime_value ? formatNumber(customer.lifetime_value) + '₫' : 'N/A' }}</span>
                     </div>
                     <div>
                         <strong>Cấp độ khách hàng:</strong>
-                        <Tag :value="'Level ' + customer.customer_level" severity="info" />
+                        <span class="ml-2"><Tag :value="'Level ' + customer.customer_level" severity="info" /></span>
                     </div>
                     <div>
                         <strong>Cảnh báo rủi ro:</strong>
-                        <Tag :value="customer.risk_flag ? 'Có' : 'Không'" :severity="customer.risk_flag ? 'danger' : 'success'" />
+                        <span class="ml-2"><Tag v-if="customer.risk_flag" value="FLAGGED" severity="danger" /> <Tag v-else value="Bình thường" severity="success" /></span>
                     </div>
                     <div>
                         <strong>Danh sách đen:</strong>
-                        <Tag :value="customer.is_blacklisted ? 'Có' : 'Không'" :severity="customer.is_blacklisted ? 'danger' : 'success'" />
+                        <span class="ml-2"><Tag :value="customer.is_blacklisted ? 'Có' : 'Không'" :severity="customer.is_blacklisted ? 'danger' : 'success'" /></span>
                     </div>
+                </div>
+            </template>
+        </Card>
+
+        <!-- BLACKLIST ACTION -->
+        <Card>
+            <template #title>Quản lý danh sách đen</template>
+            <template #content>
+                <div class="flex items-center gap-4">
+                    <div>
+                        <strong>Trạng thái danh sách đen:</strong>
+                        <Tag :value="customer.is_blacklisted ? 'Đã bị chặn' : 'Bình thường'" :severity="customer.is_blacklisted ? 'danger' : 'success'" class="ml-2" />
+                    </div>
+                    <Button :label="customer.is_blacklisted ? 'Xoá khỏi danh sách đen' : 'Thêm vào danh sách đen'" :severity="customer.is_blacklisted ? 'success' : 'danger'" @click="toggleBlacklist" />
                 </div>
             </template>
         </Card>

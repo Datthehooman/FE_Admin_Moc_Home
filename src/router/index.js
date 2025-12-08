@@ -91,7 +91,7 @@ const router = createRouter({
                     component: () => import('@/views/Customer/List_Customer.vue')
                 },
                 {
-                    path: '/Customers/List_Customer/:id',
+                    path: '/Customers/Detail_Customer/:id',
                     name: 'Detail_Customer',
                     component: () => import('@/views/Customer/Detail_Customer.vue')
                 },

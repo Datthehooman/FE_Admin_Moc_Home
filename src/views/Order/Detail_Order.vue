@@ -1,14 +1,21 @@
 <script setup>
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import Card from 'primevue/card';
 import Column from 'primevue/column';
+import ConfirmPopup from 'primevue/confirmpopup';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Tag from 'primevue/tag';
 
 import apiClient from '@/api/axios';
+
+// TOAST
+const toast = useToast();
+const confirm = useConfirm();
 
 // ROUTER
 const route = useRoute();
@@ -38,24 +45,51 @@ onMounted(() => loadOrderDetail());
 const formatNumber = (n) => Number(n).toLocaleString('vi-VN');
 
 // UPDATE STATUS
-const updateStatus = async (newStatus) => {
-    if (!confirm(`Chuyển trạng thái sang "${newStatus}"?`)) return;
+const updateStatus = async (newStatus, event) => {
+    confirm.require({
+        target: event.currentTarget,
+        message: `Chuyển trạng thái sang "${newStatus}"?`,
+        icon: 'pi pi-exclamation-triangle',
+        rejectProps: {
+            label: 'Huỷ',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Xác nhận'
+        },
+        accept: async () => {
+            try {
+                await apiClient.post(`/order/${orderId}/update-status`, {
+                    order_status: newStatus
+                });
 
-    try {
-        await apiClient.post(`/order/${orderId}/update-status`, {
-            order_status: newStatus
-        });
-
-        order.value.order_status = newStatus;
-        alert('✅ Cập nhật trạng thái thành công!');
-    } catch (err) {
-        alert('❌ Lỗi cập nhật trạng thái!');
-    }
+                order.value.order_status = newStatus;
+                toast.add({
+                    severity: 'success',
+                    summary: 'Thành công',
+                    detail: 'Cập nhật trạng thái thành công!',
+                    life: 3000
+                });
+            } catch (err) {
+                toast.add({
+                    severity: 'error',
+                    summary: 'Lỗi',
+                    detail: 'Lỗi cập nhật trạng thái!',
+                    life: 3000
+                });
+            }
+        },
+        reject: () => {
+            // User rejected, do nothing
+        }
+    });
 };
 </script>
 
 <template>
     <div class="p-4" v-if="order">
+        <ConfirmPopup></ConfirmPopup>
         <h2 class="text-2xl font-semibold mb-4">Chi tiết đơn hàng #{{ order.order_id }}</h2>
 
         <!-- ORDER STATUS + DROPDOWN -->
@@ -81,7 +115,7 @@ const updateStatus = async (newStatus) => {
                         class="capitalize"
                     />
 
-                    <Dropdown :options="orderStatuses" v-model="order.order_status" class="capitalize w-56" @change="updateStatus(order.order_status)" />
+                    <Dropdown :options="orderStatuses" v-model="order.order_status" class="capitalize w-56" @change="(e) => updateStatus(order.order_status, e)" />
                 </div>
             </template>
         </Card>
