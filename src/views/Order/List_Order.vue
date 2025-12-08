@@ -1,18 +1,23 @@
 <script setup>
 import { FilterMatchMode } from '@primevue/core/api';
 import Column from 'primevue/column';
+import ConfirmPopup from 'primevue/confirmpopup';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 import { onBeforeMount, ref } from 'vue';
 
 import apiClient from '@/api/axios';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
+const toast = useToast();
+const confirm = useConfirm();
 
 const orders = ref([]);
 const filters = ref(null);
@@ -91,22 +96,48 @@ function onSort(event) {
     }
 }
 
-const updateOrderStatus = async (order, newStatus) => {
-    if (!confirm(`Chuyển trạng thái đơn ${order.order_id} sang "${orderStatusLabels[newStatus]}"?`)) return;
+const updateOrderStatus = async (order, newStatus, event) => {
+    confirm.require({
+        target: event.currentTarget,
+        message: `Chuyển trạng thái đơn ${order.order_id} sang "${orderStatusLabels[newStatus]}"?`,
+        icon: 'pi pi-exclamation-triangle',
+        rejectProps: {
+            label: 'Huỷ',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Xác nhận'
+        },
+        accept: async () => {
+            try {
+                await apiClient.post(`/order/${order.order_id}/update-status`, {
+                    order_status: newStatus
+                });
 
-    try {
-        await apiClient.post(`/order/${order.order_id}/update-status`, {
-            order_status: newStatus
-        });
-
-        order.order_status = newStatus;
-        // Re-sort after status update
-        sortByOrderStatus();
-        alert('✅ Cập nhật trạng thái thành công!');
-    } catch (err) {
-        console.error('❌ Lỗi cập nhật trạng thái:', err.response?.data || err);
-        alert('❌ Không thể cập nhật trạng thái!');
-    }
+                order.order_status = newStatus;
+                // Re-sort after status update
+                sortByOrderStatus();
+                toast.add({
+                    severity: 'success',
+                    summary: 'Thành công',
+                    detail: 'Cập nhật trạng thái thành công!',
+                    life: 3000
+                });
+            } catch (err) {
+                console.error('❌ Lỗi cập nhật trạng thái:', err.response?.data || err);
+                toast.add({
+                    severity: 'error',
+                    summary: 'Lỗi',
+                    detail: 'Không thể cập nhật trạng thái!',
+                    life: 3000
+                });
+            }
+        },
+        reject: () => {
+            // User rejected, do nothing
+        }
+    });
 };
 
 function initFilters() {
@@ -153,6 +184,7 @@ function getStatusSeverity(status) {
 
 <template>
     <div class="card flex-1">
+        <ConfirmPopup></ConfirmPopup>
         <h2 class="font-semibold text-xl mb-4">Danh Sách Đơn Hàng</h2>
 
         <DataTable
@@ -288,7 +320,7 @@ function getStatusSeverity(status) {
                 <template #body="{ data }">
                     <div class="flex gap-2">
                         <Button icon="pi pi-eye" text severity="info" @click="router.push(`/Order/Detail_Order/${data.order_id}`)" />
-                        <Dropdown :options="orderStatuses" v-model="data.order_status" @change="updateOrderStatus(data, data.order_status)" class="w-full">
+                        <Dropdown :options="orderStatuses" v-model="data.order_status" @change="(e) => updateOrderStatus(data, data.order_status, e)" class="w-full">
                             <template #value="{ value }">
                                 <span>{{ getStatusLabel(value) }}</span>
                             </template>

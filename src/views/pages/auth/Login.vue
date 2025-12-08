@@ -2,6 +2,7 @@
 import FloatingConfigurator from '@/components/FloatingConfigurator.vue';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -12,10 +13,16 @@ const loading = ref(false);
 
 const authStore = useAuthStore();
 const router = useRouter();
+const toast = useToast();
 
 const handleLogin = async () => {
     if (!full_name.value || !password.value) {
-        alert('Vui lòng nhập đầy đủ thông tin!');
+        toast.add({
+            severity: 'warn',
+            summary: 'Cảnh báo',
+            detail: 'Vui lòng nhập đầy đủ thông tin!',
+            life: 3000
+        });
         return;
     }
 
@@ -33,11 +40,21 @@ const handleLogin = async () => {
         authStore.setToken(response.data.data.access_token);
         authStore.setUser(response.data.data.admin);
 
-        alert(response.data.message || 'Đăng nhập thành công!');
+        toast.add({
+            severity: 'success',
+            summary: 'Thành công',
+            detail: response.data.message || 'Đăng nhập thành công!',
+            life: 3000
+        });
         router.push('/'); // điều hướng đến trang chính
     } catch (error) {
         console.error('LOGIN FAILED:', error.response?.data || error);
-        alert(error.response?.data?.message || 'Đăng nhập thất bại!');
+        toast.add({
+            severity: 'error',
+            summary: 'Lỗi',
+            detail: error.response?.data?.message || 'Đăng nhập thất bại!',
+            life: 3000
+        });
     } finally {
         loading.value = false;
     }

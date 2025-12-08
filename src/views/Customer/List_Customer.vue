@@ -3,10 +3,10 @@ import { FilterMatchMode } from '@primevue/core/api';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
-import Dropdown from 'primevue/dropdown';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
+import Select from 'primevue/select';
 import Tag from 'primevue/tag';
 import { onBeforeMount, ref } from 'vue';
 
@@ -20,7 +20,6 @@ const filters = ref(null);
 const loading = ref(true);
 
 const userStatuses = ['0', '1'];
-const userRoles = ['user', 'admin', 'moderator'];
 
 const userStatusLabels = {
     0: 'Inactive',
@@ -28,9 +27,9 @@ const userStatusLabels = {
 };
 
 const userRoleLabels = {
-    user: 'User',
-    admin: 'Admin',
-    moderator: 'Moderator'
+    0: 'Customer',
+    1: 'Admin',
+    2: 'VIP'
 };
 
 onBeforeMount(() => {
@@ -56,22 +55,6 @@ async function loadCustomers() {
         initFilters();
     }
 }
-
-const updateUserStatus = async (customer, newStatus) => {
-    if (!confirm(`Thay đổi trạng thái khách hàng ${customer.full_name} sang "${userStatusLabels[newStatus]}"?`)) return;
-
-    try {
-        await apiClient.post(`/customer/${customer.user_id}/update-status`, {
-            status: newStatus
-        });
-
-        customer.status = newStatus;
-        alert('✅ Cập nhật trạng thái thành công!');
-    } catch (err) {
-        console.error('❌ Lỗi cập nhật trạng thái:', err.response?.data || err);
-        alert('❌ Không thể cập nhật trạng thái!');
-    }
-};
 
 function initFilters() {
     filters.value = {
@@ -111,9 +94,9 @@ function getRoleLabel(role) {
 
 function getRoleSeverity(role) {
     const severityMap = {
-        admin: 'danger',
-        moderator: 'warning',
-        user: 'info'
+        0: 'info',
+        1: 'danger',
+        2: 'warning'
     };
     return severityMap[role] || 'secondary';
 }
@@ -215,7 +198,7 @@ function getRoleSeverity(role) {
                     <Tag :value="getRoleLabel(data.role)" :severity="getRoleSeverity(data.role)" />
                 </template>
                 <template #filter="{ filterModel }">
-                    <Dropdown v-model="filterModel.value" :options="userRoles" placeholder="Chọn vai trò" showClear>
+                    <Select v-model="filterModel.value" :options="['0', '1', '2']" placeholder="Chọn vai trò" showClear optionLabel="" optionValue="">
                         <template #value="{ value }">
                             <span v-if="value">{{ getRoleLabel(value) }}</span>
                             <span v-else class="text-gray-400">Chọn vai trò</span>
@@ -223,7 +206,7 @@ function getRoleSeverity(role) {
                         <template #option="{ option }">
                             {{ getRoleLabel(option) }}
                         </template>
-                    </Dropdown>
+                    </Select>
                 </template>
             </Column>
 
@@ -233,7 +216,7 @@ function getRoleSeverity(role) {
                     <Tag :value="getStatusLabel(data.status)" :severity="getStatusSeverity(data.status)" />
                 </template>
                 <template #filter="{ filterModel }">
-                    <Dropdown v-model="filterModel.value" :options="userStatuses" placeholder="Chọn trạng thái" showClear>
+                    <Select v-model="filterModel.value" :options="userStatuses" placeholder="Chọn trạng thái" showClear optionLabel="" optionValue="">
                         <template #value="{ value }">
                             <span v-if="value">{{ getStatusLabel(value) }}</span>
                             <span v-else class="text-gray-400">Chọn trạng thái</span>
@@ -241,7 +224,7 @@ function getRoleSeverity(role) {
                         <template #option="{ option }">
                             {{ getStatusLabel(option) }}
                         </template>
-                    </Dropdown>
+                    </Select>
                 </template>
             </Column>
 
@@ -249,15 +232,7 @@ function getRoleSeverity(role) {
             <Column header="Hành động" style="min-width: 12rem" :sortable="false">
                 <template #body="{ data }">
                     <div class="flex gap-2">
-                        <Button icon="pi pi-eye" text severity="info" @click="router.push(`/Customer/Detail_Customer/${data.user_id}`)" />
-                        <Dropdown :options="userStatuses" v-model="data.status" @change="updateUserStatus(data, data.status)" class="w-32">
-                            <template #value="{ value }">
-                                <span>{{ getStatusLabel(value) }}</span>
-                            </template>
-                            <template #option="{ option }">
-                                {{ getStatusLabel(option) }}
-                            </template>
-                        </Dropdown>
+                        <Button icon="pi pi-eye" text severity="info" @click="router.push(`/Customers/Detail_Customer/${data.user_id}`)" />
                     </div>
                 </template>
             </Column>
