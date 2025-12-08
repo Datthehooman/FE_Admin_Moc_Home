@@ -3,8 +3,6 @@ import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import Card from 'primevue/card';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Tag from 'primevue/tag';
 
@@ -12,76 +10,81 @@ import apiClient from '@/api/axios';
 
 // ROUTER
 const route = useRoute();
-const orderId = route.params.id;
+const userId = route.params.id;
 
 // DATA
-const order = ref(null);
+const customer = ref(null);
 const loading = ref(true);
 
-const orderStatuses = ['pending', 'confirmed', 'processing', 'shipping', 'completed', 'cancelled'];
+const userStatuses = ['0', '1'];
 
-// LOAD ORDER DETAIL
-async function loadOrderDetail() {
+const userStatusLabels = {
+    0: 'Inactive',
+    1: 'Active'
+};
+
+// LOAD CUSTOMER DETAIL
+async function loadCustomerDetail() {
     try {
-        const res = await apiClient.get(`/order/${orderId}`);
-        order.value = res.data?.result?.data;
+        const res = await apiClient.get(`/customer/${userId}`);
+        customer.value = res.data?.result?.data;
     } catch (e) {
-        console.error('Lỗi load order:', e);
+        console.error('Lỗi load khách hàng:', e);
     } finally {
         loading.value = false;
     }
 }
 
-onMounted(() => loadOrderDetail());
+onMounted(() => loadCustomerDetail());
 
 // FORMAT NUMBER
 const formatNumber = (n) => Number(n).toLocaleString('vi-VN');
 
 // UPDATE STATUS
 const updateStatus = async (newStatus) => {
-    if (!confirm(`Chuyển trạng thái sang "${newStatus}"?`)) return;
+    if (!confirm(`Thay đổi trạng thái khách hàng sang "${userStatusLabels[newStatus]}"?`)) return;
 
     try {
-        await apiClient.post(`/order/${orderId}/update-status`, {
-            order_status: newStatus
+        await apiClient.post(`/customer/${userId}/update-status`, {
+            status: newStatus
         });
 
-        order.value.order_status = newStatus;
+        customer.value.status = newStatus;
         alert('✅ Cập nhật trạng thái thành công!');
     } catch (err) {
         alert('❌ Lỗi cập nhật trạng thái!');
     }
 };
+
+function formatDate(v) {
+    return new Date(v).toLocaleDateString('vi-VN');
+}
+
+function getStatusLabel(status) {
+    return userStatusLabels[status] || status;
+}
+
+function getStatusSeverity(status) {
+    const severityMap = {
+        0: 'danger',
+        1: 'success'
+    };
+    return severityMap[status] || 'secondary';
+}
 </script>
 
 <template>
-    <div class="p-4" v-if="order">
-        <h2 class="text-2xl font-semibold mb-4">Chi tiết đơn hàng #{{ order.order_id }}</h2>
+    <div class="p-4" v-if="customer">
+        <h2 class="text-2xl font-semibold mb-4">Chi tiết khách hàng #{{ customer.user_id }}</h2>
 
-        <!-- ORDER STATUS + DROPDOWN -->
+        <!-- STATUS + DROPDOWN -->
         <Card class="mb-4">
-            <template #title>Trạng thái đơn hàng</template>
+            <template #title>Trạng thái khách hàng</template>
             <template #content>
                 <div class="flex items-center gap-4">
-                    <Tag
-                        :value="order.order_status"
-                        :severity="
-                            order.order_status === 'pending'
-                                ? 'warning'
-                                : order.order_status === 'confirmed'
-                                  ? 'info'
-                                  : order.order_status === 'processing'
-                                    ? 'help'
-                                    : order.order_status === 'shipping'
-                                      ? 'primary'
-                                      : order.order_status === 'completed'
-                                        ? 'success'
-                                        : 'danger'
-                        "
-                        class="capitalize"
-                    />
+                    <Tag :value="getStatusLabel(customer.status)" :severity="getStatusSeverity(customer.status)" class="capitalize" />
 
-                    <Dropdown :options="orderStatuses" v-model="order.order_status" class="capitalize w-56" @change="updateStatus(order.order_status)" />
+                    <Dropdown :options="userStatuses" v-model="customer.status" class="capitalize w-56" @change="updateStatus(customer.status)" />
                 </div>
             </template>
         </Card>
@@ -91,67 +94,70 @@ const updateStatus = async (newStatus) => {
             <template #title>Thông tin khách hàng</template>
             <template #content>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><strong>Tên khách:</strong> {{ order.customer_name }}</div>
-                    <div><strong>SĐT:</strong> {{ order.customer_phone }}</div>
-                    <div><strong>Email:</strong> {{ order.customer_email }}</div>
-                    <div><strong>Địa chỉ giao:</strong> {{ order.shipping_address }}</div>
+                    <div><strong>Tên khách:</strong> {{ customer.full_name }}</div>
+                    <div><strong>SĐT:</strong> {{ customer.phone || 'Chưa cập nhật' }}</div>
+                    <div><strong>Email:</strong> {{ customer.email }}</div>
+                    <div><strong>Địa chỉ:</strong> {{ customer.address || 'Chưa cập nhật' }}</div>
                 </div>
             </template>
         </Card>
 
-        <!-- ORDER INFO -->
+        <!-- ACCOUNT INFO -->
         <Card class="mb-4">
-            <template #title>Thông tin đơn hàng</template>
+            <template #title>Thông tin tài khoản</template>
             <template #content>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <strong>Ngày đặt:</strong>
-                        {{ new Date(order.order_date).toLocaleDateString('vi-VN') }}
+                        <strong>Ngày tạo:</strong>
+                        {{ formatDate(customer.created_at) }}
                     </div>
-                    <div><strong>Ghi chú:</strong> {{ order.note || 'Không có' }}</div>
-                    <div><strong>Thanh toán:</strong> {{ order.payment_status }}</div>
-                    <div><strong>Voucher:</strong> {{ order.voucher_id ?? 'Không sử dụng' }}</div>
+                    <div><strong>Vai trò:</strong> {{ customer.role }}</div>
+                    <div><strong>Google ID:</strong> {{ customer.google_id || 'N/A' }}</div>
+                    <div><strong>Cập nhật lần cuối:</strong> {{ formatDate(customer.updated_at) }}</div>
                 </div>
             </template>
         </Card>
 
-        <!-- PRODUCT TABLE -->
-        <Card>
-            <template #title>Sản phẩm</template>
+        <!-- STATISTICS -->
+        <Card class="mb-4">
+            <template #title>Thống kê</template>
             <template #content>
-                <DataTable :value="order.system_order_detail" showGridlines tableStyle="min-width: 50rem">
-                    <Column header="Ảnh" style="width: 90px">
-                        <template #body="{ data }">
-                            <img :src="data.product.thumbnail" class="w-16 h-16 object-cover rounded" />
-                        </template>
-                    </Column>
-
-                    <Column header="Sản phẩm">
-                        <template #body="{ data }">
-                            <div class="font-semibold">
-                                {{ data.product.product_name }}
-                            </div>
-                            <div class="text-sm text-gray-500">SKU: {{ data.product.sku }}</div>
-                        </template>
-                    </Column>
-
-                    <Column header="Số lượng" field="quantity" style="width: 100px"></Column>
-
-                    <Column header="Giá" style="width: 140px">
-                        <template #body="{ data }"> {{ formatNumber(data.price) }}₫ </template>
-                    </Column>
-
-                    <Column header="Tổng" style="width: 160px">
-                        <template #body="{ data }">
-                            <strong>{{ formatNumber(data.subtotal) }}₫</strong>
-                        </template>
-                    </Column>
-                </DataTable>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <strong>Tổng đơn hàng:</strong>
+                        <span class="text-xl font-semibold text-primary">{{ customer.total_orders }}</span>
+                    </div>
+                    <div>
+                        <strong>Đơn hàng thành công:</strong>
+                        <span class="text-xl font-semibold text-success">{{ customer.success_orders_count }}</span>
+                    </div>
+                    <div>
+                        <strong>Đơn hàng thất bại:</strong>
+                        <span class="text-xl font-semibold text-danger">{{ customer.failed_orders_count }}</span>
+                    </div>
+                    <div>
+                        <strong>Tỷ lệ thành công:</strong>
+                        <span class="text-xl font-semibold text-info">{{ (customer.success_rate * 100).toFixed(2) }}%</span>
+                    </div>
+                    <div>
+                        <strong>Tổng giá trị:</strong>
+                        <span class="text-xl font-semibold text-primary">{{ customer.lifetime_value ? formatNumber(customer.lifetime_value) + '₫' : 'N/A' }}</span>
+                    </div>
+                    <div>
+                        <strong>Cấp độ khách hàng:</strong>
+                        <Tag :value="'Level ' + customer.customer_level" severity="info" />
+                    </div>
+                    <div>
+                        <strong>Cảnh báo rủi ro:</strong>
+                        <Tag :value="customer.risk_flag ? 'Có' : 'Không'" :severity="customer.risk_flag ? 'danger' : 'success'" />
+                    </div>
+                    <div>
+                        <strong>Danh sách đen:</strong>
+                        <Tag :value="customer.is_blacklisted ? 'Có' : 'Không'" :severity="customer.is_blacklisted ? 'danger' : 'success'" />
+                    </div>
+                </div>
             </template>
         </Card>
-
-        <!-- TOTAL SUMMARY -->
-        <div class="text-right mt-6 text-xl font-semibold">Tổng tiền: {{ formatNumber(order.total_amount) }}₫</div>
     </div>
 
     <div v-else class="p-4 text-center">Đang tải...</div>
@@ -160,5 +166,25 @@ const updateStatus = async (newStatus) => {
 <style scoped>
 .capitalize {
     text-transform: capitalize;
+}
+
+:deep(.p-tag) {
+    margin-right: 0.5rem;
+}
+
+:deep(.text-primary) {
+    color: #3b82f6;
+}
+
+:deep(.text-success) {
+    color: #10b981;
+}
+
+:deep(.text-danger) {
+    color: #ef4444;
+}
+
+:deep(.text-info) {
+    color: #0ea5e9;
 }
 </style>

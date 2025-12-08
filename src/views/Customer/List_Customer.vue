@@ -1,5 +1,6 @@
 <script setup>
 import { FilterMatchMode } from '@primevue/core/api';
+import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
@@ -14,60 +15,57 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
-const orders = ref([]);
+const customers = ref([]);
 const filters = ref(null);
 const loading = ref(true);
 
-const orderStatuses = ['pending', 'confirmed', 'processing', 'shipping', 'completed', 'cancelled'];
-const paymentStatuses = ['paid', 'unpaid'];
+const userStatuses = ['0', '1'];
+const userRoles = ['user', 'admin', 'moderator'];
 
-const orderStatusLabels = {
-    pending: 'Chờ xác nhận',
-    confirmed: 'Đã xác nhận',
-    processing: 'Đang xử lý',
-    shipping: 'Đang giao',
-    completed: 'Hoàn thành',
-    cancelled: 'Đã huỷ'
+const userStatusLabels = {
+    0: 'Inactive',
+    1: 'Active'
 };
 
-const paymentStatusLabels = {
-    paid: 'Đã thanh toán',
-    unpaid: 'Chưa thanh toán'
+const userRoleLabels = {
+    user: 'User',
+    admin: 'Admin',
+    moderator: 'Moderator'
 };
 
 onBeforeMount(() => {
-    loadOrders();
+    loadCustomers();
 });
 
-async function loadOrders() {
+async function loadCustomers() {
     loading.value = true;
     try {
-        const response = await apiClient.get('/order');
-        orders.value = response.data?.result?.data?.data || [];
+        const response = await apiClient.get('/customer/list');
+        customers.value = response.data?.result?.data || [];
         // Convert date strings to Date objects
-        orders.value.forEach((order) => {
-            if (order.order_date) {
-                order.order_date = new Date(order.order_date);
+        customers.value.forEach((customer) => {
+            if (customer.created_at) {
+                customer.created_at = new Date(customer.created_at);
             }
         });
     } catch (err) {
-        console.error('Lỗi tải đơn hàng:', err);
-        orders.value = [];
+        console.error('Lỗi tải danh sách khách hàng:', err);
+        customers.value = [];
     } finally {
         loading.value = false;
         initFilters();
     }
 }
 
-const updateOrderStatus = async (order, newStatus) => {
-    if (!confirm(`Chuyển trạng thái đơn ${order.order_id} sang "${orderStatusLabels[newStatus]}"?`)) return;
+const updateUserStatus = async (customer, newStatus) => {
+    if (!confirm(`Thay đổi trạng thái khách hàng ${customer.full_name} sang "${userStatusLabels[newStatus]}"?`)) return;
 
     try {
-        await apiClient.post(`/order/${order.order_id}/update-status`, {
-            order_status: newStatus
+        await apiClient.post(`/customer/${customer.user_id}/update-status`, {
+            status: newStatus
         });
 
-        order.order_status = newStatus;
+        customer.status = newStatus;
         alert('✅ Cập nhật trạng thái thành công!');
     } catch (err) {
         console.error('❌ Lỗi cập nhật trạng thái:', err.response?.data || err);
@@ -78,18 +76,13 @@ const updateOrderStatus = async (order, newStatus) => {
 function initFilters() {
     filters.value = {
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        order_code: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        customer_name: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        order_date: { value: null, matchMode: FilterMatchMode.DATE_IS },
-        total_amount: { value: null, matchMode: FilterMatchMode.GREATER_THAN_OR_EQUAL_TO },
-        order_status: { value: null, matchMode: FilterMatchMode.EQUALS },
-        payment_status: { value: null, matchMode: FilterMatchMode.EQUALS }
+        full_name: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        email: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        phone: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        created_at: { value: null, matchMode: FilterMatchMode.DATE_IS },
+        status: { value: null, matchMode: FilterMatchMode.EQUALS },
+        role: { value: null, matchMode: FilterMatchMode.EQUALS }
     };
-}
-
-function formatNumber(val) {
-    if (!val) return '0';
-    return Number(val).toLocaleString('vi-VN');
 }
 
 function formatDate(v) {
@@ -101,36 +94,45 @@ function clearFilter() {
 }
 
 function getStatusLabel(status) {
-    return orderStatusLabels[status] || status;
+    return userStatusLabels[status] || status;
 }
 
 function getStatusSeverity(status) {
     const severityMap = {
-        pending: 'warning',
-        confirmed: 'info',
-        processing: 'help',
-        shipping: 'primary',
-        completed: 'success',
-        cancelled: 'danger'
+        0: 'danger',
+        1: 'success'
     };
     return severityMap[status] || 'secondary';
+}
+
+function getRoleLabel(role) {
+    return userRoleLabels[role] || role;
+}
+
+function getRoleSeverity(role) {
+    const severityMap = {
+        admin: 'danger',
+        moderator: 'warning',
+        user: 'info'
+    };
+    return severityMap[role] || 'secondary';
 }
 </script>
 
 <template>
     <div class="card flex-1">
-        <h2 class="font-semibold text-xl mb-4">Danh Sách Đơn Hàng</h2>
+        <h2 class="font-semibold text-xl mb-4">Danh Sách Khách Hàng</h2>
 
         <DataTable
-            :value="orders"
+            :value="customers"
             :paginator="true"
             :rows="10"
-            dataKey="order_id"
+            dataKey="user_id"
             v-model:filters="filters"
             filterDisplay="menu"
             :loading="loading"
             :filters="filters"
-            :globalFilterFields="['order_code', 'customer_name', 'customer_phone']"
+            :globalFilterFields="['full_name', 'email', 'phone']"
             showGridlines
             scrollable
             scrollHeight="500px"
@@ -147,30 +149,26 @@ function getStatusSeverity(status) {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="filters.global.value" placeholder="Tìm kiếm đơn hàng..." />
+                        <InputText v-model="filters.global.value" placeholder="Tìm kiếm khách hàng..." />
                     </IconField>
                 </div>
             </template>
 
-            <template #empty>Không có đơn hàng nào.</template>
+            <template #empty>Không có khách hàng nào.</template>
             <template #loading>Đang tải dữ liệu...</template>
 
-            <!-- Mã đơn -->
-            <Column field="order_code" header="Mã Đơn" style="min-width: 10rem" sortable>
+            <!-- ID -->
+            <Column field="user_id" header="ID" style="min-width: 8rem" sortable>
                 <template #body="{ data }">
-                    {{ data.order_code }}
-                </template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" placeholder="Tìm theo mã..." />
+                    {{ data.user_id }}
                 </template>
             </Column>
 
-            <!-- Khách hàng -->
-            <Column header="Khách hàng" style="min-width: 14rem" sortable sortField="customer_name" filterField="customer_name">
+            <!-- Tên khách hàng -->
+            <Column header="Tên khách hàng" style="min-width: 14rem" sortable sortField="full_name" filterField="full_name">
                 <template #body="{ data }">
                     <div>
-                        <div class="font-semibold">{{ data.customer_name }}</div>
-                        <div class="text-sm opacity-70">{{ data.customer_phone }}</div>
+                        <div class="font-semibold">{{ data.full_name }}</div>
                     </div>
                 </template>
                 <template #filter="{ filterModel }">
@@ -184,31 +182,58 @@ function getStatusSeverity(status) {
                 </template>
             </Column>
 
-            <!-- Ngày đặt -->
-            <Column header="Ngày đặt" style="min-width: 10rem" field="order_date" sortable dataType="date" filterField="order_date">
+            <!-- Email -->
+            <Column header="Email" style="min-width: 16rem" field="email" sortable filterField="email">
                 <template #body="{ data }">
-                    {{ formatDate(data.order_date) }}
+                    {{ data.email }}
                 </template>
                 <template #filter="{ filterModel }">
-                    <DatePicker v-model="filterModel.value" dateFormat="dd/mm/yy" placeholder="dd/mm/yyyy" />
+                    <InputText v-model="filterModel.value" type="text" placeholder="Tìm theo email..." />
                 </template>
             </Column>
 
-            <!-- Tổng tiền -->
-            <Column header="Tổng tiền" style="min-width: 10rem" field="total_amount" sortable dataType="numeric" filterField="total_amount">
-                <template #body="{ data }"> {{ formatNumber(data.total_amount) }}₫ </template>
+            <!-- Điện thoại -->
+            <Column header="Điện thoại" style="min-width: 12rem" field="phone" sortable filterField="phone">
+                <template #body="{ data }">
+                    {{ data.phone || 'N/A' }}
+                </template>
                 <template #filter="{ filterModel }">
-                    <InputNumber v-model="filterModel.value" mode="decimal" :useGrouping="false" placeholder="Tìm theo tiền" />
+                    <InputText v-model="filterModel.value" type="text" placeholder="Tìm theo số điện thoại..." />
+                </template>
+            </Column>
+
+            <!-- Ngày tạo -->
+            <Column header="Ngày tạo" style="min-width: 10rem" field="created_at" sortable dataType="date" filterField="created_at">
+                <template #body="{ data }">
+                    {{ formatDate(data.created_at) }}
+                </template>
+            </Column>
+
+            <!-- Role -->
+            <Column header="Vai trò" style="min-width: 10rem" field="role" sortable filterField="role">
+                <template #body="{ data }">
+                    <Tag :value="getRoleLabel(data.role)" :severity="getRoleSeverity(data.role)" />
+                </template>
+                <template #filter="{ filterModel }">
+                    <Dropdown v-model="filterModel.value" :options="userRoles" placeholder="Chọn vai trò" showClear>
+                        <template #value="{ value }">
+                            <span v-if="value">{{ getRoleLabel(value) }}</span>
+                            <span v-else class="text-gray-400">Chọn vai trò</span>
+                        </template>
+                        <template #option="{ option }">
+                            {{ getRoleLabel(option) }}
+                        </template>
+                    </Dropdown>
                 </template>
             </Column>
 
             <!-- Trạng thái -->
-            <Column header="Trạng thái" style="min-width: 12rem" field="order_status" sortable filterField="order_status">
+            <Column header="Trạng thái" style="min-width: 10rem" field="status" sortable filterField="status">
                 <template #body="{ data }">
-                    <Tag :value="getStatusLabel(data.order_status)" :severity="getStatusSeverity(data.order_status)" />
+                    <Tag :value="getStatusLabel(data.status)" :severity="getStatusSeverity(data.status)" />
                 </template>
                 <template #filter="{ filterModel }">
-                    <Dropdown v-model="filterModel.value" :options="orderStatuses" placeholder="Chọn trạng thái" showClear>
+                    <Dropdown v-model="filterModel.value" :options="userStatuses" placeholder="Chọn trạng thái" showClear>
                         <template #value="{ value }">
                             <span v-if="value">{{ getStatusLabel(value) }}</span>
                             <span v-else class="text-gray-400">Chọn trạng thái</span>
@@ -220,39 +245,12 @@ function getStatusSeverity(status) {
                 </template>
             </Column>
 
-            <!-- Thanh toán -->
-            <Column header="Thanh toán" style="min-width: 12rem" field="payment_status" sortable filterField="payment_status">
-                <template #body="{ data }">
-                    <Tag :value="paymentStatusLabels[data.payment_status]" :severity="data.payment_status === 'paid' ? 'success' : 'danger'" />
-                </template>
-                <template #filter="{ filterModel }">
-                    <Dropdown v-model="filterModel.value" :options="paymentStatuses" placeholder="Chọn trạng thái" showClear>
-                        <template #value="{ value }">
-                            <span v-if="value">{{ paymentStatusLabels[value] }}</span>
-                            <span v-else class="text-gray-400">Chọn trạng thái</span>
-                        </template>
-                        <template #option="{ option }">
-                            {{ paymentStatusLabels[option] }}
-                        </template>
-                    </Dropdown>
-                </template>
-            </Column>
-
-            <!-- Địa chỉ -->
-            <Column header="Địa chỉ giao hàng" style="min-width: 18rem">
-                <template #body="{ data }">
-                    <div style="white-space: normal; word-break: break-word">
-                        {{ data.shipping_address }}
-                    </div>
-                </template>
-            </Column>
-
             <!-- Hành động -->
             <Column header="Hành động" style="min-width: 12rem" :sortable="false">
                 <template #body="{ data }">
                     <div class="flex gap-2">
-                        <Button icon="pi pi-eye" text severity="info" @click="router.push(`/Order/Detail_Order/${data.order_id}`)" />
-                        <Dropdown :options="orderStatuses" v-model="data.order_status" @change="updateOrderStatus(data, data.order_status)" class="w-full">
+                        <Button icon="pi pi-eye" text severity="info" @click="router.push(`/Customer/Detail_Customer/${data.user_id}`)" />
+                        <Dropdown :options="userStatuses" v-model="data.status" @change="updateUserStatus(data, data.status)" class="w-32">
                             <template #value="{ value }">
                                 <span>{{ getStatusLabel(value) }}</span>
                             </template>
@@ -277,5 +275,9 @@ function getStatusSeverity(status) {
     width: 100%;
     display: flex;
     flex-direction: column;
+}
+
+:deep(.p-dropdown) {
+    width: 100%;
 }
 </style>
