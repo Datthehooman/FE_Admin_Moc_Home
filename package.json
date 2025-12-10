@@ -13,6 +13,7 @@
         "@tanstack/vue-query": "^5.90.6",
         "axios": "^1.13.1",
         "chart.js": "3.3.2",
+        "md-editor-v3": "^6.2.0",
         "pinia": "^3.0.3",
         "pinia-plugin-persistedstate": "^4.7.1",
         "primeicons": "^7.0.0",

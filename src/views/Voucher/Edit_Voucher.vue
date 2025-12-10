@@ -4,11 +4,13 @@ import Button from 'primevue/button';
 import Calendar from 'primevue/calendar';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
+import { useToast } from 'primevue/usetoast';
 import { onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
 const router = useRouter();
+const toast = useToast();
 const voucherId = route.params.id;
 
 const loading = ref(false);
@@ -74,11 +76,21 @@ const submitForm = async () => {
             }
         });
 
-        alert('✅ Cập nhật voucher thành công!');
+        toast.add({
+            severity: 'success',
+            summary: 'Thành công',
+            detail: 'Cập nhật voucher thành công!',
+            life: 3000
+        });
         router.push('/Voucher/List_Voucher');
     } catch (err) {
         console.error('❌ Lỗi API:', err.response?.data);
-        alert('❌ Cập nhật thất bại!');
+        toast.add({
+            severity: 'error',
+            summary: 'Lỗi',
+            detail: 'Cập nhật thất bại!',
+            life: 3000
+        });
     } finally {
         loading.value = false;
     }
@@ -112,17 +124,17 @@ onMounted(() => {
             <!-- Status -->
             <div class="flex flex-col gap-1 w-full">
                 <label>Trạng thái</label>
-               <Dropdown
-    v-model="voucherForm.status"
-    :options="[
-        { label: 'Active', value: 'active' },
-        { label: 'Inactive', value: 'inactive' }
-    ]"
-    optionLabel="label"
-    optionValue="value"
-    placeholder="Chọn trạng thái"
-    class="w-full"
-/>
+                <Dropdown
+                    v-model="voucherForm.status"
+                    :options="[
+                        { label: 'Active', value: 'active' },
+                        { label: 'Inactive', value: 'inactive' }
+                    ]"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Chọn trạng thái"
+                    class="w-full"
+                />
 
                 <span v-if="errors.status" class="text-red-600 text-sm">{{ errors.status }}</span>
             </div>

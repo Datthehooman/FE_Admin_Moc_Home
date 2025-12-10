@@ -5,9 +5,11 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import FileUpload from 'primevue/fileupload';
 import InputText from 'primevue/inputtext';
+import { useToast } from 'primevue/usetoast';
 import { reactive, ref } from 'vue';
 
 const authStore = useAuthStore();
+const toast = useToast();
 
 const categoryForm = reactive({
     category_name: '',
@@ -60,7 +62,12 @@ const submitForm = async () => {
             }
         });
 
-        alert('Tạo danh mục thành công!');
+        toast.add({
+            severity: 'success',
+            summary: 'Thành công',
+            detail: 'Tạo danh mục thành công!',
+            life: 3000
+        });
         console.log('Response:', response.data);
 
         // Reset form
@@ -72,10 +79,20 @@ const submitForm = async () => {
     } catch (err) {
         if (err.response) {
             console.error('Response data:', err.response.data);
-            alert('Tạo danh mục thất bại: ' + JSON.stringify(err.response.data));
+            toast.add({
+                severity: 'error',
+                summary: 'Lỗi',
+                detail: 'Tạo danh mục thất bại: ' + JSON.stringify(err.response.data),
+                life: 3000
+            });
         } else {
             console.error(err);
-            alert('Tạo danh mục thất bại!');
+            toast.add({
+                severity: 'error',
+                summary: 'Lỗi',
+                detail: 'Tạo danh mục thất bại!',
+                life: 3000
+            });
         }
     } finally {
         loading.value = false;

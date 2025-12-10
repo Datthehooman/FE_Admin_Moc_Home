@@ -72,13 +72,7 @@ const model = ref([
             {
                 label: 'Đơn Hàng',
                 icon: 'pi pi-fw pi-shopping-cart',
-                items: [
-                    {
-                        label: 'Danh sách đơn hàng',
-                        icon: 'pi pi-fw pi-box',
-                        to: '/Order/List_Order'
-                    }
-                ]
+                to: '/Order/List_Order'
             }
         ]
     },
@@ -92,7 +86,7 @@ const model = ref([
         items: [{ label: 'Khuyến Mãi', icon: 'pi pi-fw pi-gift', to: '/Promotions/List' }]
     },
     {
-        items: [{ label: 'Khách Hàng', icon: 'pi pi-fw pi-users', to: '/Customers/List' }]
+        items: [{ label: 'Khách Hàng', icon: 'pi pi-fw pi-users', to: '/Customers/List_Customer' }]
     }
 ]);
 </script>
