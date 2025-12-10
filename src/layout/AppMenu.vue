@@ -77,7 +77,44 @@ const model = ref([
         ]
     },
     {
-        items: [{ label: 'Bài Viết', icon: 'pi pi-fw pi-pencil', to: '/Posts/List' }]
+        items: [
+            {
+                label: 'Bài Viết',
+                icon: 'pi pi-fw pi-pencil',
+                items: [
+                    {
+                        label: 'Danh sách bài viết',
+                        icon: 'pi pi-fw pi-file',
+                        to: '/Article/List_Article'
+                    },
+                    {
+                        label: 'Thêm bài viết',
+                        icon: 'pi pi-fw pi-plus',
+                        to: '/Article/Add_Article'
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        items: [
+            {
+                label: 'Danh Mục Bài Viết',
+                icon: 'pi pi-fw pi-folder',
+                items: [
+                    {
+                        label: 'Danh sách danh mục bài viết',
+                        icon: 'pi pi-fw pi-box',
+                        to: '/Article_Category/List_Article_Category'
+                    },
+                    {
+                        label: 'Thêm danh mục bài viết',
+                        icon: 'pi pi-fw pi-plus',
+                        to: '/Article_Category/Add_Article_Category'
+                    }
+                ]
+            }
+        ]
     },
     {
         items: [{ label: 'Đánh Giá', icon: 'pi pi-fw pi-star', to: '/Reviews/List' }]
