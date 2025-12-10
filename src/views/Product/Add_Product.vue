@@ -9,84 +9,109 @@ import { onBeforeMount, reactive, ref } from 'vue';
 
 const authStore = useAuthStore();
 
-const categories = ref([]); // categories lấy từ API
-
+// ======================================
+// FORM DATA
+// ======================================
 const productForm = reactive({
-    product_name: '',
-    category_id: null,
-    price: '',
-    status: '',
-    sku: '',
-    images: []
-});
+  "product_name": "",
+  "category_id": "",
+  "sku": "",
+  "brand": "",
+  "description": "",
+  "material": "",
+  "size": "",
+  "color": "",
+  "weight": "",
+  "price": "",
+  "price_down": "",
+  "rating": "",
+  "badge": "",
+  "quantity": "",
+  "slug": "",
+  "status": "",
+  "images": []
+}
+);
 
-const errors = reactive({
-    product_name: '',
-    category_id: '',
-    price: '',
-    status: '',
-    sku: '',
-    images: ''
-});
+// VALIDATION ERROR
+const errors = reactive({});
 
 const loading = ref(false);
+
+// ======================================
+// LOAD CATEGORY
+// ======================================
+const categories = ref([]);
 const categoryLoading = ref(true);
 
-// Load categories từ API
 const loadCategories = async () => {
-    categoryLoading.value = true;
     try {
         const res = await apiClient.get('/category/list', {
             headers: { Authorization: `Bearer ${authStore.token}` }
         });
-        categories.value = res.data.result.data.map((c) => ({
+
+        categories.value = res.data.result.data.map(c => ({
             id: c.id,
             name: c.category_name
         }));
+
     } catch (err) {
-        console.error('Lỗi tải danh mục:', err);
+        console.error(err);
         categories.value = [];
     } finally {
         categoryLoading.value = false;
     }
 };
 
-onBeforeMount(() => {
-    loadCategories();
-});
+onBeforeMount(() => loadCategories());
 
-// Validate thủ công và lưu vào reactive errors
+// ======================================
+// VALIDATE FORM
+// ======================================
 const validateForm = () => {
-    // Reset errors
-    Object.keys(errors).forEach((key) => (errors[key] = ''));
+    Object.keys(productForm).forEach(k => (errors[k] = ''));
 
-    if (!productForm.product_name.trim()) errors.product_name = 'Tên sản phẩm không được để trống.';
-    if (!productForm.category_id) errors.category_id = 'Vui lòng chọn danh mục.';
-    if (!productForm.price || isNaN(productForm.price) || Number(productForm.price) <= 0) errors.price = 'Giá sản phẩm phải lớn hơn 0.';
-    if (!productForm.status) errors.status = 'Vui lòng chọn trạng thái.';
-    if (!productForm.sku.trim()) errors.sku = 'SKU không được để trống.';
+    if (!productForm.product_name.trim()) errors.product_name = 'Không được để trống';
+    if (!productForm.category_id) errors.category_id = 'Chọn danh mục';
+    if (!productForm.sku.trim()) errors.sku = 'Không được để trống';
+    if (!productForm.price) errors.price = 'Không được để trống';
+    if (!productForm.quantity) errors.quantity = 'Không được để trống';
+    if (productForm.images.length === 0) errors.images = 'Chọn ít nhất 1 ảnh';
 
-    // Nếu có bất cứ lỗi nào, return false
-    return !Object.values(errors).some((e) => e);
+    return !Object.values(errors).some(e => e);
 };
 
+// ======================================
+// SUBMIT
+// ======================================
 const submitForm = async () => {
     if (!validateForm()) return;
 
     loading.value = true;
     try {
         const formData = new FormData();
+
+        // ========== SEND ALL REQUIRED FIELDS ==========
         formData.append('product_name', productForm.product_name);
         formData.append('category_id', productForm.category_id);
-        formData.append('price', productForm.price);
-        formData.append('status', productForm.status === 'Hiện' ? 1 : 0);
         formData.append('sku', productForm.sku);
+        formData.append('brand', productForm.brand);
+        formData.append('description', productForm.description);
+        formData.append('material', productForm.material);
+        formData.append('size', productForm.size);
+        formData.append('color', productForm.color);
+        formData.append('weight', productForm.weight);
+        formData.append('price', productForm.price);
+       formData.append('price_down', productForm.price_down ? productForm.price_down : productForm.price);
+        formData.append('quantity', productForm.quantity);
+        formData.append('status', productForm.status === 'Hiện' ? 1 : 0);
 
-        if (productForm.images.length > 0) {
-            formData.append('images[0]', productForm.images[0].file);
-        }
+        // ========== IMAGES ==========
+        productForm.images.forEach((img, i) => {
+            formData.append(`images[${i}]`, img.file);
+        });
 
-        const response = await apiClient.post('/products', formData, {
+        const res = await apiClient.post('/products', formData, {
             headers: {
                 Authorization: `Bearer ${authStore.token}`,
                 'Content-Type': 'multipart/form-data'
@@ -94,86 +119,206 @@ const submitForm = async () => {
         });
 
         alert('Thêm sản phẩm thành công!');
-        console.log('Response:', response.data);
-
-        // Reset form sau khi thêm
-        Object.keys(productForm).forEach((key) => {
-            if (Array.isArray(productForm[key])) productForm[key] = [];
-            else productForm[key] = '';
-        });
+        console.log(res.data);
     } catch (err) {
-        if (err.response) {
-            console.error('Response data:', err.response.data);
-            alert('Thêm sản phẩm thất bại: ' + JSON.stringify(err.response.data));
-        } else {
-            console.error(err);
-            alert('Thêm sản phẩm thất bại!');
-        }
+        console.error(err);
+        alert('Thêm thất bại!');
     } finally {
         loading.value = false;
     }
 };
+
+// ======================================
+// HANDLE SELECT IMAGE
+// ======================================
+const onSelectImages = (event) => {
+    productForm.images = event.files.map(f => ({
+        file: f,
+        objectURL: URL.createObjectURL(f)
+    }));
+};
 </script>
-
 <template>
-    <div class="card flex-1">
-        <h2 class="font-semibold text-xl mb-4">Thêm Sản Phẩm</h2>
+  <div class="flex gap-6">
 
-        <div class="flex flex-col gap-4">
-            <!-- Product Name -->
-            <div class="flex flex-col gap-1 w-full">
-                <label for="product_name">Tên sản phẩm</label>
-                <InputText id="product_name" v-model="productForm.product_name" class="w-full" />
-                <span v-if="errors.product_name" class="text-red-600 text-sm">{{ errors.product_name }}</span>
-            </div>
+    <!-- ===================== LEFT COLUMN ===================== -->
+    <div class="left-form flex-1 bg-white p-5 rounded-lg shadow">
 
-            <!-- Category and Price -->
-            <div class="flex flex-wrap gap-4">
-                <div class="flex flex-col gap-1 w-full">
-                    <label for="category">Danh mục</label>
-                    <Dropdown id="category" v-model="productForm.category_id" :options="categories" optionLabel="name" optionValue="id" placeholder="Chọn danh mục" class="w-full" :loading="categoryLoading" />
-                    <span v-if="errors.category_id" class="text-red-600 text-sm">{{ errors.category_id }}</span>
-                </div>
+      <h2 class="font-semibold text-xl mb-4">Thêm sản phẩm mới</h2>
 
-                <div class="flex flex-col gap-1 w-full">
-                    <label for="price">Giá</label>
-                    <InputText id="price" v-model="productForm.price" type="number" class="w-full" />
-                    <span v-if="errors.price" class="text-red-600 text-sm">{{ errors.price }}</span>
-                </div>
-            </div>
+      <!-- NAME -->
+      <div class="mb-4">
+        <label class="font-medium">Tên sản phẩm</label>
+        <InputText v-model="productForm.product_name" class="w-full" />
+        <p class="err" v-if="errors.product_name">{{ errors.product_name }}</p>
+      </div>
 
-            <!-- Status and SKU -->
-            <div class="flex flex-wrap gap-4">
-                <div class="flex flex-col gap-1 w-full">
-                    <label for="status">Trạng thái</label>
-                    <Dropdown id="status" v-model="productForm.status" :options="['Hiện', 'Ẩn']" placeholder="Chọn trạng thái" class="w-full" />
-                    <span v-if="errors.status" class="text-red-600 text-sm">{{ errors.status }}</span>
-                </div>
+      <!-- DESCRIPTION -->
+      <div class="mb-4">
+        <label class="font-medium">Mô tả</label>
+        <textarea
+          v-model="productForm.description"
+          class="w-full p-2 border rounded"
+          rows="5"
+        ></textarea>
+      </div>
 
-                <div class="flex flex-col gap-1 w-full">
-                    <label for="sku">SKU</label>
-                    <InputText id="sku" v-model="productForm.sku" class="w-full" />
-                    <span v-if="errors.sku" class="text-red-600 text-sm">{{ errors.sku }}</span>
-                </div>
-            </div>
-
-            <!-- Images -->
-            <div class="flex flex-col gap-1 w-full">
-                <label for="images">Hình ảnh</label>
-                <FileUpload id="images" v-model="productForm.images" mode="basic" name="images[]" accept="image/*" auto class="w-full" />
-                <span v-if="errors.images" class="text-red-600 text-sm">{{ errors.images }}</span>
-            </div>
-
-            <!-- Submit -->
-            <Button label="Thêm sản phẩm" icon="pi pi-check" class="mt-4" :loading="loading" @click="submitForm" />
+      <!-- CATEGORY + BRAND -->
+      <div class="flex gap-4 mb-4">
+        <div class="flex-1">
+          <label class="font-medium">Danh mục</label>
+          <Dropdown
+            v-model="productForm.category_id"
+            :options="categories"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="Chọn danh mục"
+            class="w-full"
+          />
+          <p class="err" v-if="errors.category_id">{{ errors.category_id }}</p>
         </div>
-    </div>
-</template>
 
+        <div class="flex-1">
+          <label class="font-medium">Thương hiệu</label>
+          <InputText v-model="productForm.brand" class="w-full" />
+        </div>
+      </div>
+
+      <!-- PRICE -->
+      <div class="flex gap-4 mb-4">
+        <div class="flex-1">
+          <label class="font-medium">Giá</label>
+          <InputText type="number" v-model="productForm.price" class="w-full" />
+          <p class="err" v-if="errors.price">{{ errors.price }}</p>
+        </div>
+
+        <div class="flex-1">
+          <label class="font-medium">Giá giảm</label>
+          <InputText type="number" v-model="productForm.price_down" class="w-full" />
+        </div>
+      </div>
+
+      <!-- SKU + QUANTITY -->
+      <div class="flex gap-4 mb-4">
+        <div class="flex-1">
+          <label class="font-medium">SKU</label>
+          <InputText v-model="productForm.sku" class="w-full" />
+          <p class="err" v-if="errors.sku">{{ errors.sku }}</p>
+        </div>
+
+        <div class="flex-1">
+          <label class="font-medium">Số lượng</label>
+          <InputText type="number" v-model="productForm.quantity" class="w-full" />
+          <p class="err" v-if="errors.quantity">{{ errors.quantity }}</p>
+        </div>
+      </div>
+
+      <!-- MATERIAL + SIZE -->
+      <div class="flex gap-4 mb-4">
+        <div class="flex-1">
+          <label class="font-medium">Chất liệu</label>
+          <InputText v-model="productForm.material" class="w-full" />
+        </div>
+
+        <div class="flex-1">
+          <label class="font-medium">Kích thước</label>
+          <InputText v-model="productForm.size" class="w-full" />
+        </div>
+      </div>
+
+      <!-- COLOR + WEIGHT -->
+      <div class="flex gap-4 mb-4">
+        <div class="flex-1">
+          <label class="font-medium">Màu sắc</label>
+          <InputText v-model="productForm.color" class="w-full" />
+        </div>
+
+        <div class="flex-1">
+          <label class="font-medium">Khối lượng</label>
+          <InputText v-model="productForm.weight" class="w-full" />
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===================== RIGHT COLUMN ===================== -->
+    <div class="right-sidebar w-[330px] flex flex-col gap-6">
+
+      <!-- FEATURED IMAGE -->
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold mb-2">Ảnh đại diện</h3>
+
+        <FileUpload
+          accept="image/*"
+          mode="advanced"
+          customUpload
+          chooseLabel="Chọn ảnh"
+          @select="onSelectImages"
+        />
+
+        <!-- PREVIEW -->
+        <div v-if="productForm.images.length > 0" class="mt-3">
+          <img
+            :src="productForm.images[0].objectURL"
+            class="w-full h-44 object-cover rounded shadow"
+          />
+        </div>
+      </div>
+
+      <!-- GALLERY -->
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold mb-2">Ảnh thư viện</h3>
+
+        <div class="flex mt-3 flex-wrap gap-2">
+          <div
+            v-for="(g,i) in productForm.images"
+            v-if="i > 0"
+            :key="i"
+            class="w-20 h-20"
+          >
+            <img :src="g.objectURL" class="w-full h-full object-cover rounded shadow" />
+          </div>
+        </div>
+      </div>
+
+      <!-- STATUS -->
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold mb-2">Trạng thái</h3>
+
+        <Dropdown
+          v-model="productForm.status"
+          :options="['Hiện','Ẩn']"
+          class="w-full"
+        />
+
+        <Button
+          label="Đăng sản phẩm"
+          icon="pi pi-check"
+          class="w-full mt-4"
+          :loading="loading"
+          @click="submitForm"
+        />
+      </div>
+
+    </div>
+
+  </div>
+</template>
 <style scoped>
-.card.flex-1 {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
+.err {
+  color: red;
+  font-size: 13px;
+}
+
+.right-sidebar {
+  position: sticky;
+  top: 20px;
+  height: calc(100vh - 40px);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.right-sidebar::-webkit-scrollbar {
+  display: none;
 }
 </style>
+
