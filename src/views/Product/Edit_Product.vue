@@ -30,15 +30,15 @@ const productForm = reactive({
   price_down: "",
   quantity: "",
   status: "",
-  thumbnail: null,
-  gallery: []     // multiple images
+  thumbnail: null, // ảnh chính
+  gallery: []     // ảnh phụ
 });
 
 const errors = reactive({});
 const loading = ref(false);
 
 // =========================
-// LOAD CATEGORY
+// CATEGORY
 // =========================
 const categories = ref([]);
 const categoryLoading = ref(true);
@@ -86,8 +86,9 @@ const loadProduct = async () => {
     productForm.thumbnail = null;
     productForm.gallery = [];
     if(p.images && p.images.length > 0){
+      // Ảnh đầu tiên là main image (thumbnail)
+      productForm.thumbnail = null; // nếu muốn preview local thì khác
       productForm.gallery = p.images.map(f => ({ file: null, objectURL: f.url }));
-      productForm.thumbnail = null; // preview khác nếu muốn
     }
   } catch (err) {
     console.error(err);
@@ -107,6 +108,7 @@ const validateForm = () => {
   if(!productForm.sku.trim()) errors.sku = 'Không được để trống';
   if(!productForm.price) errors.price = 'Không được để trống';
   if(!productForm.quantity) errors.quantity = 'Không được để trống';
+  if(!productForm.thumbnail) errors.thumbnail = 'Chọn ít nhất 1 ảnh đại diện';
 
   return !Object.values(errors).some(e => e);
 };
@@ -121,7 +123,6 @@ const submitForm = async () => {
   try {
     const formData = new FormData();
 
-    // append tất cả fields
     Object.keys(productForm).forEach(k => {
       if(k === "sizes"){
         productForm.sizes.forEach(s => formData.append("sizes[]", s));
@@ -136,13 +137,13 @@ const submitForm = async () => {
       }
     });
 
-    await apiClient.post(`/products/${productId}`, formData, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-        'Content-Type': 'multipart/form-data'
-      },
-      params: { _method: "PUT" }
-    });
+await apiClient.post(`/products/${productId}`, formData, {
+  headers: {
+    Authorization: `Bearer ${authStore.token}`,
+    'Content-Type': 'multipart/form-data'
+  }
+});
+
 
     alert("Cập nhật thành công!");
     router.push('/Product/ProductList');
@@ -156,14 +157,42 @@ const submitForm = async () => {
 };
 
 // =========================
-// HANDLE SELECT IMAGE
+// IMAGE HANDLING
 // =========================
+const mainUpload = ref(null);
+
+// Chọn ảnh đại diện
 const onSelectThumbnail = (e) => {
-  if(e.files.length) productForm.thumbnail = e.files[0];
+  if(e.files.length === 0) return;
+  productForm.thumbnail = e.files[0];
+  mainUpload.value.clear();
 };
 
+// Xóa ảnh đại diện
+const removeThumbnail = () => {
+  productForm.thumbnail = null;
+  mainUpload.value.clear();
+};
+
+// Chọn ảnh gallery
 const onSelectGallery = (e) => {
-  productForm.gallery = e.files.map(f => ({ file: f, objectURL: URL.createObjectURL(f) }));
+  const galleryObjs = e.files.map(f => ({ file: f, objectURL: URL.createObjectURL(f) }));
+  productForm.gallery = [...productForm.gallery, ...galleryObjs];
+};
+
+// Xóa ảnh gallery
+const removeGalleryImage = (i) => {
+  productForm.gallery.splice(i, 1);
+};
+
+// Đặt ảnh gallery làm thumbnail
+const setAsMainImage = (i) => {
+  if(i < 0 || i >= productForm.gallery.length) return;
+  const g = productForm.gallery[i];
+  const oldThumb = productForm.thumbnail;
+  if(g.file) productForm.thumbnail = g.file;
+  else productForm.thumbnail = null;
+  productForm.gallery[i] = { file: oldThumb, objectURL: g.objectURL };
 };
 
 // =========================
@@ -178,7 +207,7 @@ onMounted(() => {
 <template>
 <div class="flex gap-6">
 
-  <!-- LEFT COLUMN -->
+  <!-- LEFT FORM -->
   <div class="flex-1 bg-white p-5 rounded-lg shadow">
     <h2 class="font-semibold text-xl mb-4">Chỉnh sửa sản phẩm</h2>
 
@@ -234,36 +263,6 @@ onMounted(() => {
         <p class="err" v-if="errors.quantity">{{ errors.quantity }}</p>
       </div>
     </div>
-
-    <!-- MATERIAL + SIZE -->
-    <div class="flex gap-4 mb-4">
-      <div class="flex-1">
-        <label>Chất liệu</label>
-        <InputText v-model="productForm.material" class="w-full"/>
-      </div>
-      <div class="flex-1">
-        <label>Size</label>
-        <div class="flex gap-2 flex-wrap">
-          <div v-for="s in ['S','M','L','XL','XXL']" :key="s" class="flex items-center gap-1">
-            <input type="checkbox" :value="s" v-model="productForm.sizes" class="w-4 h-4"/>
-            <span>{{s}}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- COLOR + WEIGHT -->
-    <div class="flex gap-4 mb-4">
-      <div class="flex-1">
-        <label>Màu sắc</label>
-        <InputText v-model="productForm.color" class="w-full"/>
-      </div>
-      <div class="flex-1">
-        <label>Khối lượng</label>
-        <InputText v-model="productForm.weight" class="w-full"/>
-      </div>
-    </div>
-
   </div>
 
   <!-- RIGHT SIDEBAR -->
@@ -272,19 +271,54 @@ onMounted(() => {
     <!-- THUMBNAIL -->
     <div class="bg-white p-4 rounded-lg shadow">
       <h3 class="font-semibold mb-2">Ảnh đại diện</h3>
-      <FileUpload accept="image/*" mode="advanced" customUpload chooseLabel="Chọn ảnh" @select="onSelectThumbnail"/>
-      <div v-if="productForm.thumbnail" class="mt-3">
-        <img :src="URL.createObjectURL(productForm.thumbnail)" class="w-full h-44 object-cover rounded shadow"/>
+      <FileUpload
+        ref="mainUpload"
+        accept="image/*"
+        mode="basic"
+        customUpload
+        chooseLabel="Chọn ảnh"
+        @select="onSelectThumbnail"
+        class="w-full"
+      >
+        <template #content>
+          <button class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded shadow transition duration-200">
+            Chọn ảnh
+          </button>
+        </template>
+      </FileUpload>
+
+      <div v-if="productForm.thumbnail" class="mt-3 relative">
+        <img :src="productForm.thumbnail ? URL.createObjectURL(productForm.thumbnail) : productForm.gallery[0]?.objectURL" class="w-full h-44 object-cover rounded shadow"/>
+        <button @click="removeThumbnail" class="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white text-sm px-2 py-1 rounded shadow transition duration-200">
+          Xóa
+        </button>
       </div>
+      <p class="err mt-1 text-red-500 text-sm" v-if="errors.thumbnail">{{ errors.thumbnail }}</p>
     </div>
 
     <!-- GALLERY -->
     <div class="bg-white p-4 rounded-lg shadow">
       <h3 class="font-semibold mb-2">Ảnh thư viện</h3>
-      <FileUpload multiple accept="image/*" mode="advanced" customUpload chooseLabel="Chọn nhiều ảnh" @select="onSelectGallery"/>
+      <FileUpload
+        multiple
+        accept="image/*"
+        mode="basic"
+        customUpload
+        chooseLabel="Chọn ảnh phụ"
+        @select="onSelectGallery"
+      >
+        <template #content>
+          <button class="w-full bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded shadow transition duration-200">
+            Chọn ảnh phụ
+          </button>
+        </template>
+      </FileUpload>
+
       <div class="flex mt-3 flex-wrap gap-2">
-        <div v-for="(g,i) in productForm.gallery" :key="i" class="w-20 h-20">
+        <div v-for="(g,i) in productForm.gallery" :key="i" class="w-20 h-20 relative">
           <img :src="g.objectURL" class="w-full h-full object-cover rounded shadow"/>
+          <button @click="removeGalleryImage(i)" class="absolute top-1 right-1 bg-red-500 text-white text-xs px-1 py-0.5 rounded shadow">Xóa</button>
+          <button @click="setAsMainImage(i)" class="absolute bottom-1 left-1 bg-white text-xs px-1 rounded shadow">Ảnh chính</button>
         </div>
       </div>
     </div>
@@ -297,13 +331,9 @@ onMounted(() => {
     </div>
 
   </div>
-
 </div>
 </template>
 
 <style scoped>
-.err {
-  color: red;
-  font-size: 13px;
-}
+.err { color: red; font-size: 13px; }
 </style>

@@ -1,78 +1,151 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, watch } from "vue";
+import apiClient from "@/api/axios";
+import { useLayout } from "@/layout/composables/layout";
+import { useAuthStore } from "@/stores/auth";
 
-const menu = ref(null);
+const authStore = useAuthStore();
+const { isDarkTheme } = useLayout();
 
-const items = ref([
-    { label: 'Add New', icon: 'pi pi-fw pi-plus' },
-    { label: 'Remove', icon: 'pi pi-fw pi-trash' }
-]);
+const chartData = ref(null);
+const chartOptions = ref(null);
+
+const fromDate = ref("");
+const toDate = ref("");
+
+const labels = ref([]);
+const dataCounts = ref([]);
+const statusLabels = ref([]);
+
+// 🎯 GỌI API
+async function fetchOrderStatusDistribution() {
+    try {
+        const res = await apiClient.get(
+            "https://api.mocfurni.shop/api/system/dashboard/order-status-distribution",
+            {
+                params: {
+                    from_date: fromDate.value || undefined,
+                    to_date: toDate.value || undefined
+                },
+                headers: { Authorization: `Bearer ${authStore.token}` }
+            }
+        );
+
+        const distribution = res.data.result.data.distribution || [];
+        const statusVN = {
+            pending: "Chờ xử lý",
+            processing: "Đang xử lý",
+            completed: "Hoàn tất",
+            cancelled: "Đã hủy",
+            failed: "Thất bại",
+            rejected: "Bị từ chối"
+        };
+
+        labels.value = distribution.map(i => statusVN[i.status] || i.label);
+        statusLabels.value = labels.value;
+        dataCounts.value = distribution.map(i => i.count);
+
+        buildChart();
+    } catch (err) {
+        console.error("Order Status Distribution Error:", err);
+    }
+}
+
+// 🎯 BUILD PIE CHART HẦM HỐ
+function buildChart() {
+    const style = getComputedStyle(document.documentElement);
+
+    // Gradient Neon Colors
+    const colors = [
+        "rgba(138,43,226,0.9)",  // tím neon
+        "rgba(255,140,0,0.9)",   // cam neon
+        "rgba(255,20,147,0.9)",  // hồng neon
+        "rgba(0,255,127,0.9)",   // xanh lá neon
+        "rgba(30,144,255,0.9)",  // xanh dương neon
+        "rgba(255,215,0,0.9)"    // vàng neon
+    ];
+
+    const gradients = dataCounts.value.map((_, i) => colors[i % colors.length]);
+
+    chartData.value = {
+        labels: labels.value,
+        datasets: [
+            {
+                label: "Số đơn hàng",
+                data: dataCounts.value,
+                backgroundColor: gradients,
+                borderColor: "#fff",
+                borderWidth: 2,
+                hoverOffset: 20, // slice pop-out
+                hoverBorderColor: "#fff",
+                hoverBorderWidth: 3,
+            }
+        ]
+    };
+
+    chartOptions.value = {
+        maintainAspectRatio: false,
+        responsive: true,
+        animation: {
+            animateRotate: true,
+            animateScale: true,
+            duration: 1500,
+            easing: "easeOutQuart"
+        },
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const total = dataCounts.value.reduce((a, b) => a + b, 0);
+                        const count = context.raw;
+                        const percentage = total ? ((count / total) * 100).toFixed(1) : 0;
+                        const status = statusLabels.value[context.dataIndex];
+                        return `${status}: ${count} đơn - ${percentage}%`;
+                    }
+                }
+            },
+            legend: {
+                position: "bottom",
+                labels: {
+                    color: style.getPropertyValue("--text-color-secondary"),
+                    boxWidth: 18,
+                    padding: 15,
+                    usePointStyle: true,
+                    pointStyle: "circle"
+                }
+            }
+        }
+    };
+}
+
+// Watch theme
+watch([isDarkTheme], () => buildChart());
+onMounted(() => fetchOrderStatusDistribution());
+function applyFilter() { fetchOrderStatusDistribution(); }
 </script>
 
 <template>
-    <div class="card">
-        <div class="flex items-center justify-between mb-6">
-            <div class="font-semibold text-xl">Notifications</div>
-            <div>
-                <Button icon="pi pi-ellipsis-v" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu.toggle($event)"></Button>
-                <Menu ref="menu" popup :model="items" class="!min-w-40"></Menu>
+<div class="card pb-4">
+    <div class="font-semibold text-xl mb-4">Tỉ lệ trạng thái đơn hàng</div>
+
+    <!-- BỘ LỌC -->
+    <div class="p-3 bg-gray-50 rounded-lg mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+            <div class="md:col-span-2">
+                <label class="text-sm font-medium block mb-1">Từ ngày</label>
+                <input type="date" v-model="fromDate" class="w-full p-inputtext" />
+            </div>
+            <div class="md:col-span-2">
+                <label class="text-sm font-medium block mb-1">Đến ngày</label>
+                <input type="date" v-model="toDate" class="w-full p-inputtext" />
+            </div>
+            <div class="flex justify-start md:justify-end">
+                <Button icon="pi pi-filter" class="p-button-rounded p-button-outlined" @click="applyFilter" />
             </div>
         </div>
-
-        <span class="block text-muted-color font-medium mb-4">TODAY</span>
-        <ul class="p-0 mx-0 mt-0 mb-6 list-none">
-            <li class="flex items-center py-2 border-b border-surface">
-                <div class="w-12 h-12 flex items-center justify-center bg-blue-100 dark:bg-blue-400/10 rounded-full mr-4 shrink-0">
-                    <i class="pi pi-dollar !text-xl text-blue-500"></i>
-                </div>
-                <span class="text-surface-900 dark:text-surface-0 leading-normal"
-                    >Richard Jones
-                    <span class="text-surface-700 dark:text-surface-100">has purchased a blue t-shirt for <span class="text-primary font-bold">$79.00</span></span>
-                </span>
-            </li>
-            <li class="flex items-center py-2">
-                <div class="w-12 h-12 flex items-center justify-center bg-orange-100 dark:bg-orange-400/10 rounded-full mr-4 shrink-0">
-                    <i class="pi pi-download !text-xl text-orange-500"></i>
-                </div>
-                <span class="text-surface-700 dark:text-surface-100 leading-normal">Your request for withdrawal of <span class="text-primary font-bold">$2500.00</span> has been initiated.</span>
-            </li>
-        </ul>
-
-        <span class="block text-muted-color font-medium mb-4">YESTERDAY</span>
-        <ul class="p-0 m-0 list-none mb-6">
-            <li class="flex items-center py-2 border-b border-surface">
-                <div class="w-12 h-12 flex items-center justify-center bg-blue-100 dark:bg-blue-400/10 rounded-full mr-4 shrink-0">
-                    <i class="pi pi-dollar !text-xl text-blue-500"></i>
-                </div>
-                <span class="text-surface-900 dark:text-surface-0 leading-normal"
-                    >Keyser Wick
-                    <span class="text-surface-700 dark:text-surface-100">has purchased a black jacket for <span class="text-primary font-bold">$59.00</span></span>
-                </span>
-            </li>
-            <li class="flex items-center py-2 border-b border-surface">
-                <div class="w-12 h-12 flex items-center justify-center bg-pink-100 dark:bg-pink-400/10 rounded-full mr-4 shrink-0">
-                    <i class="pi pi-question !text-xl text-pink-500"></i>
-                </div>
-                <span class="text-surface-900 dark:text-surface-0 leading-normal"
-                    >Jane Davis
-                    <span class="text-surface-700 dark:text-surface-100">has posted a new questions about your product.</span>
-                </span>
-            </li>
-        </ul>
-        <span class="block text-muted-color font-medium mb-4">LAST WEEK</span>
-        <ul class="p-0 m-0 list-none">
-            <li class="flex items-center py-2 border-b border-surface">
-                <div class="w-12 h-12 flex items-center justify-center bg-green-100 dark:bg-green-400/10 rounded-full mr-4 shrink-0">
-                    <i class="pi pi-arrow-up !text-xl text-green-500"></i>
-                </div>
-                <span class="text-surface-900 dark:text-surface-0 leading-normal">Your revenue has increased by <span class="text-primary font-bold">%25</span>.</span>
-            </li>
-            <li class="flex items-center py-2 border-b border-surface">
-                <div class="w-12 h-12 flex items-center justify-center bg-purple-100 dark:bg-purple-400/10 rounded-full mr-4 shrink-0">
-                    <i class="pi pi-heart !text-xl text-purple-500"></i>
-                </div>
-                <span class="text-surface-900 dark:text-surface-0 leading-normal"><span class="text-primary font-bold">12</span> users have added your products to their wishlist.</span>
-            </li>
-        </ul>
     </div>
+
+    <!-- PIE CHART HẦM HỐ -->
+    <Chart type="pie" :data="chartData" :options="chartOptions" class="h-80" />
+</div>
 </template>
