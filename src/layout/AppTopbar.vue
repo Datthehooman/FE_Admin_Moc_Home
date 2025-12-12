@@ -10,13 +10,10 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
             <button class="layout-menu-button layout-topbar-action" @click="toggleMenu">
                 <i class="pi pi-bars"></i>
             </button>
-            <router-link to="/" class="layout-topbar-logo">
-                <div class="size-24 flex justify-center items-center">
-                    <img src="/public/logo.png" alt="logo" />
-                </div>
-
-                <span>MỘC HOME</span>
-            </router-link>
+<router-link to="/" class="layout-topbar-logo">
+  <img src="@/assets/logo.png" alt="Logo" class="h-10 w-auto" />
+  <span class="text-[#6e4e37]">MỘC HOME</span>
+</router-link>
         </div>
 
         <div class="layout-topbar-actions">
