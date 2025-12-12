@@ -57,12 +57,12 @@ function buildChart() {
 
     // Gradient Neon Colors
     const colors = [
-        "rgba(138,43,226,0.9)",  // tím neon
+        "rgba(255,215,0,0.9)",    // vàng neon
         "rgba(255,140,0,0.9)",   // cam neon
-        "rgba(255,20,147,0.9)",  // hồng neon
         "rgba(0,255,127,0.9)",   // xanh lá neon
+        "rgba(255,0,0,0.9)",  // đỏ neon
+        "rgba(255,20,147,0.9)",  // hồng neon
         "rgba(30,144,255,0.9)",  // xanh dương neon
-        "rgba(255,215,0,0.9)"    // vàng neon
     ];
 
     const gradients = dataCounts.value.map((_, i) => colors[i % colors.length]);

@@ -17,6 +17,7 @@ const labels = ref([]);
 const gross  = ref([]);
 const net    = ref([]);
 
+// ----------------- FETCH DATA -----------------
 async function fetchRevenuePeriod() {
     try {
         const res = await apiClient.get(
@@ -39,21 +40,22 @@ async function fetchRevenuePeriod() {
     }
 }
 
+// ----------------- BUILD CHART -----------------
 function buildChart() {
-    // tạo gradient màu neon
     const ctx = document.createElement("canvas").getContext("2d");
 
+    // gradient neon cho bar
     const gradientGross = ctx.createLinearGradient(0,0,0,300);
-    gradientGross.addColorStop(0, "rgba(0, 206, 209, 0.8)"); // xanh ngọc neon
+    gradientGross.addColorStop(0, "rgba(0, 206, 209, 0.8)");
     gradientGross.addColorStop(1, "rgba(0, 206, 209, 0.3)");
 
     const gradientNet = ctx.createLinearGradient(0,0,0,300);
-    gradientNet.addColorStop(0, "rgba(138, 43, 226, 0.8)"); // tím neon
-    gradientNet.addColorStop(1, "rgba(138, 43, 226, 0.3)");
+    gradientNet.addColorStop(0, "rgba(255,0,0,0.8)"); // đổi màu tím -> đỏ neon
+    gradientNet.addColorStop(1, "rgba(255,0,0,0.3)");
 
-    const gradientLine = ctx.createLinearGradient(0,0,0,300);
-    gradientLine.addColorStop(0, "rgba(255, 215, 0, 0.8)"); // vàng neon
-    gradientLine.addColorStop(1, "rgba(255, 215, 0, 0.3)");
+    // Tính % tăng trưởng so với ngày trước đó
+    const growthGross = gross.value.map((v,i) => i === 0 ? 0 : ((v - gross.value[i-1]) / gross.value[i-1]) * 100);
+    const growthNet   = net.value.map((v,i) => i === 0 ? 0 : ((v - net.value[i-1]) / net.value[i-1]) * 100);
 
     chartData.value = {
         labels: labels.value,
@@ -65,11 +67,7 @@ function buildChart() {
                 backgroundColor: gradientGross,
                 borderRadius: 12,
                 barThickness: 28,
-                hoverBackgroundColor: "rgba(0, 206, 209, 1)",
-                shadowOffsetX: 2,
-                shadowOffsetY: 4,
-                shadowBlur: 10,
-                shadowColor: "rgba(0,206,209,0.5)"
+                hoverBackgroundColor: "rgba(0, 206, 209, 1)"
             },
             {
                 type: "bar",
@@ -78,30 +76,40 @@ function buildChart() {
                 backgroundColor: gradientNet,
                 borderRadius: 12,
                 barThickness: 28,
-                hoverBackgroundColor: "rgba(138,43,226,1)",
-                shadowOffsetX: 2,
-                shadowOffsetY: 4,
-                shadowBlur: 10,
-                shadowColor: "rgba(138,43,226,0.5)"
+                hoverBackgroundColor: "rgba(255,0,0,1)"
             },
-         {
-    type: "line",
-    label: "Tăng trưởng %",
-    data: gross.value.map((v,i)=>((v-net.value[i])/v*100)),
-    borderColor: "#7CFC00",          // xanh lá tươi nhẹ
-    backgroundColor: "rgba(124,252,0,0.2)", // fill nhẹ xanh lá tươi
-    fill: true,
-    tension: 0.4,
-    pointRadius: 8,
-    pointHoverRadius: 10,
-    pointBackgroundColor: "#7CFC00",
-    pointBorderColor: "#fff",
-    pointHoverBorderColor: "#7CFC00",
-    cubicInterpolationMode: "monotone",
-    yAxisID: "y1"
-}
-
-
+            {
+                type: "line",
+                label: "Tăng trưởng Gộp %",
+                data: growthGross,
+                borderColor: "#7CFC00",
+                backgroundColor: "rgba(124,252,0,0.2)",
+                fill: true,
+                tension: 0.4,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointBackgroundColor: "#7CFC00",
+                pointBorderColor: "#fff",
+                pointHoverBorderColor: "#7CFC00",
+                cubicInterpolationMode: "monotone",
+                yAxisID: "y1"
+            },
+            {
+                type: "line",
+                label: "Tăng trưởng Thuần %",
+                data: growthNet,
+                borderColor: "#FFD700",
+                backgroundColor: "rgba(255,215,0,0.2)",
+                fill: true,
+                tension: 0.4,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointBackgroundColor: "#FFD700",
+                pointBorderColor: "#fff",
+                pointHoverBorderColor: "#FFD700",
+                cubicInterpolationMode: "monotone",
+                yAxisID: "y1"
+            }
         ]
     };
 
@@ -141,12 +149,11 @@ function buildChart() {
                 type: "linear",
                 position: "right",
                 ticks: {
-                    color: "#32CD32",          // chữ xanh lá đậm hơn
-                    callback: val => val.toFixed(2)+"%"
+                    color: "#32CD32",
+                    callback: val => val.toFixed(2) + "%"
                 },
                 grid: { drawOnChartArea: false }
             }
-
         },
         animation: { duration: 1800, easing: "easeOutQuart" }
     };
@@ -181,7 +188,7 @@ function applyFilter() { fetchRevenuePeriod(); }
         </div>
     </div>
 
-    <!-- BIỂU ĐỒ NEON HẦM HỐ -->
+    <!-- BIỂU ĐỒ NEON -->
     <Chart type="bar" :data="chartData" :options="chartOptions" class="h-80" />
 </div>
 </template>
