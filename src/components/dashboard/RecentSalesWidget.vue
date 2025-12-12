@@ -96,7 +96,7 @@ onMounted(() => fetchDefault());
                 <Button
                     icon="pi pi-search"
                     class="p-button-text"
-                    @click="$router.push(`/admin/products/${slotProps.data.product_id}`)"
+                    @click="$router.push(`/Product/Detail/${slotProps.data.product_id}`)"
                 />
             </template>
         </Column>

@@ -10,11 +10,13 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import MultiSelect from 'primevue/multiselect';
 import Tag from 'primevue/tag';
+import { useToast } from 'primevue/usetoast';
 
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 const router = useRouter();
 
+const toast = useToast(); // <-- thêm đây
 const products = ref([]);
 const filters = ref(null);
 const loading = ref(true);
@@ -29,7 +31,9 @@ onBeforeMount(async () => {
 async function loadProducts() {
     loading.value = true;
     try {
-        const response = await apiClient.get('/products');
+        const response = await apiClient.get('/products', {
+            headers: { Authorization: `Bearer ${authStore.token}` }
+        });
         products.value = response.data.result.data || [];
     } catch (err) {
         console.error('Lỗi tải sản phẩm:', err);
@@ -57,7 +61,7 @@ function formatNumber(val) {
     return Number(val).toLocaleString('vi-VN');
 }
 
-// Xóa sản phẩm
+// Xóa sản phẩm với toast
 async function deleteProduct(product) {
     if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${product.product_name}" không?`)) return;
 
@@ -67,13 +71,28 @@ async function deleteProduct(product) {
         });
 
         products.value = products.value.filter(p => p.product_id !== product.product_id);
-        alert('Xóa sản phẩm thành công!');
+
+        // Thông báo success
+        toast.add({
+            severity: 'success',
+            summary: 'Thành công',
+            detail: `Xóa sản phẩm "${product.product_name}" thành công!`,
+            life: 3000
+        });
+
     } catch (err) {
         console.error('Lỗi xóa sản phẩm:', err.response || err);
-        alert('Xóa sản phẩm thất bại!');
+        // Thông báo error
+        toast.add({
+            severity: 'error',
+            summary: 'Lỗi',
+            detail: `Xóa sản phẩm "${product.product_name}" thất bại!`,
+            life: 3000
+        });
     }
 }
 </script>
+
 
 <template>
 <div class="card flex-1">
@@ -183,14 +202,35 @@ async function deleteProduct(product) {
     </Column>
 
     <!-- Hành động -->
-    <Column header="Hành động" style="min-width: 10rem">
-        <template #body="{ data }">
-            <div class="flex gap-2">
-                <Button icon="pi pi-pencil" text severity="primary" @click="router.push(`/Product/Edit_Product/${data.product_id}`)" />
-                <Button icon="pi pi-trash" text severity="danger" @click="deleteProduct(data)" />
-            </div>
-        </template>
-    </Column>
+    <!-- Hành động -->
+<Column header="Hành động" style="min-width: 12rem">
+  <template #body="{ data }">
+    <div class="flex gap-2">
+      <!-- Chi tiết -->
+      <Button
+        icon="pi pi-search"
+        text
+        severity="info"
+        @click="router.push(`/Product/Detail/${data.product_id}`)"
+      />
+      <!-- Sửa -->
+      <Button
+        icon="pi pi-pencil"
+        text
+        severity="primary"
+        @click="router.push(`/Product/Edit_Product/${data.product_id}`)"
+      />
+      <!-- Xóa -->
+      <Button
+        icon="pi pi-trash"
+        text
+        severity="danger"
+        @click="deleteProduct(data)"
+      />
+    </div>
+  </template>
+</Column>
+
 </DataTable>
 
 

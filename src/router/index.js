@@ -31,6 +31,11 @@ const router = createRouter({
                     meta: { requiresAuth: true }
                 },
                 {
+        path: '/Product/Detail/:id', // route chi tiết sản phẩm
+        name: 'ProductDetail',
+        component: () => import('@/views/Product/ProductDetail.vue')
+    },
+                {
                     path: 'Category/Categories',
                     name: 'Categories',
                     component: () => import('@/views/Category/Categories.vue')
