@@ -11,12 +11,18 @@ import StatsWidget from '@/components/dashboard/StatsWidget.vue';
         <StatsWidget />
 
         <div class="col-span-12 xl:col-span-6">
+            <RevenueStreamWidget />
+            <CustomerRegionChart />
             <RecentSalesWidget />
-            <BestSellingWidget />
+
         </div>
         <div class="col-span-12 xl:col-span-6">
-            <RevenueStreamWidget />
+            <RevenueOverTime />
             <NotificationsWidget />
+            <BestSellingWidget />
+
         </div>
+
+
     </div>
 </template>

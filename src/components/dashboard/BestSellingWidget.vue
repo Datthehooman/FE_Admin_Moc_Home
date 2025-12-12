@@ -1,96 +1,122 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from "vue";
+import apiClient from "@/api/axios";
+import { useAuthStore } from "@/stores/auth";
 
+const authStore = useAuthStore();
 const menu = ref(null);
+const products = ref([]);
 
-const items = ref([
-    { label: 'Add New', icon: 'pi pi-fw pi-plus' },
-    { label: 'Remove', icon: 'pi pi-fw pi-trash' }
-]);
+const fromDate = ref("");
+const toDate = ref("");
+
+// ==========================
+// CALL API LOW STOCK PRODUCT
+// ==========================
+async function fetchLowStock() {
+    try {
+        const res = await apiClient.get(
+            "https://api.mocfurni.shop/api/system/dashboard/low-stock-product",
+            { headers: { Authorization: `Bearer ${authStore.token}` } }
+        );
+        const data = res.data.result.data;
+        products.value = [...data.critical_products, ...data.low_stock_products];
+    } catch (err) {
+        console.error("Low Stock Product Error:", err);
+    }
+}
+
+onMounted(() => fetchLowStock());
+
+const menuItems = [
+    { label: "Làm mới", icon: "pi pi-refresh", command: () => fetchLowStock() }
+];
+
+function formatCurrency(value) {
+    return value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
+}
+
+function applyFilter() {
+    fetchLowStock();
+}
 </script>
 
 <template>
-    <div class="card">
-        <div class="flex justify-between items-center mb-6">
-            <div class="font-semibold text-xl">Best Selling Products</div>
-            <div>
-                <Button icon="pi pi-ellipsis-v" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu.toggle($event)"></Button>
-                <Menu ref="menu" popup :model="items" class="!min-w-40"></Menu>
+<div class="card pb-4">
+    <!-- HEADER -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="font-semibold text-xl">Sản phẩm tồn kho thấp</div>
+
+        <div>
+            <Button
+                icon="pi pi-ellipsis-v"
+                class="p-button-text p-button-plain p-button-rounded"
+                @click="$refs.menu.toggle($event)"
+            />
+            <Menu ref="menu" popup :model="menuItems" class="!min-w-40" />
+        </div>
+    </div>
+
+    <!-- FILTER -->
+    <div class="p-3 bg-gray-50 rounded-lg mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+            <div class="md:col-span-2">
+                <label class="text-sm font-medium block mb-1">Từ ngày</label>
+                <input
+                    type="date"
+                    v-model="fromDate"
+                    class="border border-gray-300 rounded-md px-3 py-2 w-full"
+                />
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="text-sm font-medium block mb-1">Đến ngày</label>
+                <input
+                    type="date"
+                    v-model="toDate"
+                    class="border border-gray-300 rounded-md px-3 py-2 w-full"
+                />
+            </div>
+
+            <div class="flex justify-start md:justify-end">
+                <Button
+                    icon="pi pi-filter"
+                    class="p-button-rounded p-button-outlined"
+                    @click="applyFilter"
+                />
             </div>
         </div>
-        <ul class="list-none p-0 m-0">
-            <li class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                <div>
-                    <span class="text-surface-900 dark:text-surface-0 font-medium mr-2 mb-1 md:mb-0">Space T-Shirt</span>
-                    <div class="mt-1 text-muted-color">Clothing</div>
-                </div>
-                <div class="mt-2 md:mt-0 flex items-center">
-                    <div class="bg-surface-300 dark:bg-surface-500 rounded-border overflow-hidden w-40 lg:w-24" style="height: 8px">
-                        <div class="bg-orange-500 h-full" style="width: 50%"></div>
-                    </div>
-                    <span class="text-orange-500 ml-4 font-medium">%50</span>
-                </div>
-            </li>
-            <li class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                <div>
-                    <span class="text-surface-900 dark:text-surface-0 font-medium mr-2 mb-1 md:mb-0">Portal Sticker</span>
-                    <div class="mt-1 text-muted-color">Accessories</div>
-                </div>
-                <div class="mt-2 md:mt-0 ml-0 md:ml-20 flex items-center">
-                    <div class="bg-surface-300 dark:bg-surface-500 rounded-border overflow-hidden w-40 lg:w-24" style="height: 8px">
-                        <div class="bg-cyan-500 h-full" style="width: 16%"></div>
-                    </div>
-                    <span class="text-cyan-500 ml-4 font-medium">%16</span>
-                </div>
-            </li>
-            <li class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                <div>
-                    <span class="text-surface-900 dark:text-surface-0 font-medium mr-2 mb-1 md:mb-0">Supernova Sticker</span>
-                    <div class="mt-1 text-muted-color">Accessories</div>
-                </div>
-                <div class="mt-2 md:mt-0 ml-0 md:ml-20 flex items-center">
-                    <div class="bg-surface-300 dark:bg-surface-500 rounded-border overflow-hidden w-40 lg:w-24" style="height: 8px">
-                        <div class="bg-pink-500 h-full" style="width: 67%"></div>
-                    </div>
-                    <span class="text-pink-500 ml-4 font-medium">%67</span>
-                </div>
-            </li>
-            <li class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                <div>
-                    <span class="text-surface-900 dark:text-surface-0 font-medium mr-2 mb-1 md:mb-0">Wonders Notebook</span>
-                    <div class="mt-1 text-muted-color">Office</div>
-                </div>
-                <div class="mt-2 md:mt-0 ml-0 md:ml-20 flex items-center">
-                    <div class="bg-surface-300 dark:bg-surface-500 rounded-border overflow-hidden w-40 lg:w-24" style="height: 8px">
-                        <div class="bg-green-500 h-full" style="width: 35%"></div>
-                    </div>
-                    <span class="text-primary ml-4 font-medium">%35</span>
-                </div>
-            </li>
-            <li class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                <div>
-                    <span class="text-surface-900 dark:text-surface-0 font-medium mr-2 mb-1 md:mb-0">Mat Black Case</span>
-                    <div class="mt-1 text-muted-color">Accessories</div>
-                </div>
-                <div class="mt-2 md:mt-0 ml-0 md:ml-20 flex items-center">
-                    <div class="bg-surface-300 dark:bg-surface-500 rounded-border overflow-hidden w-40 lg:w-24" style="height: 8px">
-                        <div class="bg-purple-500 h-full" style="width: 75%"></div>
-                    </div>
-                    <span class="text-purple-500 ml-4 font-medium">%75</span>
-                </div>
-            </li>
-            <li class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                <div>
-                    <span class="text-surface-900 dark:text-surface-0 font-medium mr-2 mb-1 md:mb-0">Robots T-Shirt</span>
-                    <div class="mt-1 text-muted-color">Clothing</div>
-                </div>
-                <div class="mt-2 md:mt-0 ml-0 md:ml-20 flex items-center">
-                    <div class="bg-surface-300 dark:bg-surface-500 rounded-border overflow-hidden w-40 lg:w-24" style="height: 8px">
-                        <div class="bg-teal-500 h-full" style="width: 40%"></div>
-                    </div>
-                    <span class="text-teal-500 ml-4 font-medium">%40</span>
-                </div>
-            </li>
-        </ul>
     </div>
+
+    <!-- LIST -->
+    <ul class="list-none p-0 m-0">
+        <li v-for="item in products" :key="item.product_id"
+            class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+
+            <!-- LEFT -->
+            <div class="flex items-center space-x-3">
+                <img
+                    :src="item.product_image"
+                    class="w-12 h-12 object-cover rounded transition-transform duration-300 ease-out hover:scale-125 hover:-rotate-3 "
+                />
+
+                <div>
+                    <span class="text-surface-900 dark:text-surface-0 font-medium">
+                        {{ item.product_name }}
+                    </span>
+                    <div class="mt-1 text-muted-color">
+                        {{ formatCurrency(item.price) }}
+                    </div>
+                    <div class="text-sm text-red-500 mt-1">
+                        Tồn kho: {{ item.stock_quantity }}
+                    </div>
+                </div>
+            </div>
+        </li>
+
+        <li v-if="products.length === 0" class="text-center text-gray-500 py-4">
+            Không có dữ liệu
+        </li>
+    </ul>
+</div>
 </template>
