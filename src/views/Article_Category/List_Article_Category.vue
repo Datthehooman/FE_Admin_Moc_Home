@@ -3,7 +3,7 @@ import { FilterMatchMode } from '@primevue/core/api';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
-import Dropdown from 'primevue/dropdown';
+import Select from 'primevue/select';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
@@ -83,6 +83,36 @@ const updateCategoryStatus = async (category, newStatus) => {
         await loadCategories(); // Tải lại danh sách để đảm bảo dữ liệu đúng
     }
 };
+
+/**
+ * Xóa danh mục
+ */
+async function deleteCategory(category) {
+    if (!confirm(`Bạn có chắc muốn xóa danh mục "${category.name}" không? Thao tác này không thể hoàn tác.`)) return;
+
+    try {
+        // Gọi API DELETE tới endpoint /article-categories/{id}
+        await apiClient.delete(`/article-categories/${category.id}`, {
+            headers: { Authorization: `Bearer ${authStore.token}` } // Truyền token xác thực
+        });
+
+        // Xóa danh mục khỏi danh sách trên giao diện
+        categories.value = categories.value.filter((c) => c.id !== category.id);
+        alert('✅ Xóa danh mục thành công!');
+    } catch (err) {
+        console.error('❌ Lỗi xóa danh mục:', err.response?.data || err);
+        
+        // --- BẮT LỖI 409 CỤ THỂ ---
+        if (err.response && err.response.status === 409) {
+            alert(`❌ KHÔNG THỂ XÓA DANH MỤC! \n\nDanh mục "${category.name}" hiện đang chứa bài viết. \n\nVui lòng xóa hết các bài viết thuộc danh mục này trước khi thực hiện xóa danh mục.`);
+        } else {
+            alert('❌ Xóa danh mục thất bại! Vui lòng kiểm tra quyền hoặc kết nối.');
+        }
+        // -----------------------------
+    }
+}
+
+
 
 // Khởi tạo bộ lọc (Không đổi)
 function initFilters() {
@@ -187,7 +217,7 @@ function navigateToEdit(id) {
                 </template>
             </Column>
 
-            <Column field="desc" header="Mô tả (Desc)" style="min-width: 18rem">
+            <Column field="desc" header="Mô tả" style="min-width: 18rem">
                 <template #body="{ data }">
                     <div style="white-space: normal; word-break: break-word; max-height: 4em; overflow: hidden; text-overflow: ellipsis">
                         {{ data.desc }}
@@ -198,16 +228,16 @@ function navigateToEdit(id) {
                 </template>
             </Column>
 
-            <Column header="Trạng thái (Status)" style="min-width: 10rem" field="status" sortable filterField="status">
+            <Column header="Trạng thái" style="min-width: 10rem" field="status" sortable filterField="status">
                 <template #body="{ data }">
                     <Tag :value="getStatusLabel(data.status)" :severity="getStatusSeverity(data.status)" />
                 </template>
                 <template #filter="{ filterModel }">
-                    <Dropdown v-model="filterModel.value" :options="categoryStatuses" optionLabel="label" optionValue="value" placeholder="Chọn trạng thái" showClear />
+                    <Select v-model="filterModel.value" :options="categoryStatuses" optionLabel="label" optionValue="value" placeholder="Chọn trạng thái" showClear />
                 </template>
             </Column>
 
-            <Column header="Ngày tạo (Created At)" style="min-width: 10rem" field="created_at" sortable dataType="date" filterField="created_at">
+            <Column header="Ngày tạo" style="min-width: 10rem" field="created_at" sortable dataType="date" filterField="created_at">
                 <template #body="{ data }">
                     {{ formatDate(data.created_at) }}
                 </template>
@@ -216,24 +246,25 @@ function navigateToEdit(id) {
                 </template>
             </Column>
 
-            <Column header="Cập nhật (Updated At)" style="min-width: 10rem" field="updated_at" sortable>
+            <Column header="Cập nhật" style="min-width: 10rem" field="updated_at" sortable>
                 <template #body="{ data }">
                     {{ formatDate(data.updated_at) }}
                 </template>
             </Column>
 
-            <Column header="Hành động" style="min-width: 12rem" :sortable="false">
-                <template #body="{ data }">
+            <Column header="Hành động" style="min-width: 15rem" :sortable="false"> <template #body="{ data }">
                     <div class="flex gap-2 items-center">
                         <Button icon="pi pi-pencil" text severity="warning" @click="navigateToEdit(data.id)" />
-                        <Dropdown :options="categoryStatuses" optionLabel="label" optionValue="value" v-model="data.status" @change="updateCategoryStatus(data, data.status)" class="w-full">
+                        <Button icon="pi pi-trash" text severity="danger" @click="deleteCategory(data)" /> 
+
+                        <Select :options="categoryStatuses" optionLabel="label" optionValue="value" v-model="data.status" @change="updateCategoryStatus(data, data.status)" class="w-full">
                             <template #value="{ value }">
                                 <span>{{ getStatusLabel(value) }}</span>
                             </template>
                             <template #option="{ option }">
                                 {{ getStatusLabel(option.value) }}
                             </template>
-                        </Dropdown>
+                        </Select>
                     </div>
                 </template>
             </Column>
