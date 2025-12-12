@@ -34,6 +34,7 @@ async function fetchSummary() {
           from_date: fromDate.value || undefined,
           to_date: toDate.value || undefined
         },
+
         headers: { Authorization: `Bearer ${authStore.token}` }
       }
     );
