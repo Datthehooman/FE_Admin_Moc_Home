@@ -117,7 +117,7 @@ const model = ref([
         ]
     },
     {
-        items: [{ label: 'Đánh Giá', icon: 'pi pi-fw pi-star', to: '/Reviews/List' }]
+        items: [{ label: 'Đánh Giá', icon: 'pi pi-fw pi-star', to: '/Review/List_Review' }]
     },
     {
         items: [{ label: 'Khuyến Mãi', icon: 'pi pi-fw pi-gift', to: '/Promotions/List' }]
