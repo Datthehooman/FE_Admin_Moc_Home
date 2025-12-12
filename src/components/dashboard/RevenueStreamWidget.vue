@@ -34,11 +34,9 @@ async function fetchSummary() {
           from_date: fromDate.value || undefined,
           to_date: toDate.value || undefined
         },
-
         headers: { Authorization: `Bearer ${authStore.token}` }
       }
     );
-
     const data = res.data.result.data;
     values.value = [data.gross_revenue.value, data.net_revenue.value];
 
@@ -135,6 +133,7 @@ function applyFilter() {
 </script>
 
 <template>
+<!-- Giao diend nguoi dung cho widget doanh thu tren dashboard -->
   <div class="card pb-4">
     <div class="font-semibold text-xl mb-4">Doanh thu tổng hợp</div>
 
