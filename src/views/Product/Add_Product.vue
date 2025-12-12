@@ -21,7 +21,6 @@ const productForm = reactive({
   brand: "",
   description: "",
   material: "",
-  size: "",
   color: "",
   weight: "",
   length: "",
@@ -34,7 +33,7 @@ const productForm = reactive({
   quantity: "",
   slug: "",
   status: "",
-  images: [] // all images
+  images: []
 });
 
 // VALIDATION ERROR
@@ -88,6 +87,7 @@ const validateForm = () => {
 
     return !Object.values(errors).some(e => e);
 };
+
 // ======================================
 // SUBMIT FORM
 // ======================================
@@ -98,7 +98,6 @@ const submitForm = async () => {
     try {
         const formData = new FormData();
 
-        // ========== SEND ALL REQUIRED FIELDS ==========
         for (const key of Object.keys(productForm)) {
             if (key === 'images') continue;
             formData.append(key, productForm[key]);
@@ -106,7 +105,6 @@ const submitForm = async () => {
         formData.append('price_down', productForm.price_down ? productForm.price_down : productForm.price);
         formData.append('status', productForm.status === 'Hiện' ? 1 : 0);
 
-        // ========== IMAGES ==========
         productForm.images.forEach((img, i) => {
             formData.append(`images[${i}]`, img.file);
         });
@@ -124,9 +122,7 @@ const submitForm = async () => {
             detail: 'Thêm sản phẩm thành công!',
             life: 3000
         });
-        console.log('Response:', res.data);
 
-        // Reset form
         Object.keys(productForm).forEach((key) => {
             if (Array.isArray(productForm[key])) productForm[key] = [];
             else productForm[key] = '';
@@ -164,11 +160,7 @@ const onSelectImages = (event) => {
     }));
 };
 
-// ======================================
-// SET IMAGE AS MAIN
-// ======================================
-// ================= HANDLE IMAGE SELECT =================
-// Chọn ảnh đại diện
+// ================= MAIN IMAGE =================
 const mainUpload = ref(null);
 
 const onSelectMainImage = (event) => {
@@ -176,13 +168,13 @@ const onSelectMainImage = (event) => {
 
     if (productForm.images.length > 0 && productForm.images[0]?.file) {
         errors.images = 'Đã có ảnh chính, vui lòng xóa ảnh cũ trước khi thêm ảnh mới';
-        mainUpload.value.clear(); // xóa file vừa chọn trong UI
+        mainUpload.value.clear();
         return;
     }
 
     const mainFile = event.files[0];
     const mainObj = { file: mainFile, objectURL: URL.createObjectURL(mainFile) };
-    productForm.images = [mainObj]; // chỉ giữ 1 ảnh duy nhất
+    productForm.images = [mainObj];
 
     mainUpload.value.clear();
     mainUpload.value.files = [mainFile];
@@ -190,22 +182,19 @@ const onSelectMainImage = (event) => {
     errors.images = '';
 };
 
-
 const removeMainImage = () => {
     productForm.images = [];
-    mainUpload.value.clear(); // xóa file khỏi FileUpload UI
+    mainUpload.value.clear();
     errors.images = '';
 };
 
-
-// Chọn ảnh phụ (thêm vào mảng từ vị trí 1 trở đi)
+// ================= GALLERY IMAGES =================
 const onSelectGalleryImages = (event) => {
     const galleryObjs = event.files.map(f => ({
         file: f,
         objectURL: URL.createObjectURL(f)
     }));
 
-    // Nếu chưa có main image thì thêm 1 dummy vào đầu để giữ index 0
     if (productForm.images.length === 0) {
         productForm.images.push({ file: null, objectURL: '' });
     }
@@ -216,7 +205,6 @@ const onSelectGalleryImages = (event) => {
     ];
 };
 
-// Set ảnh chính khi bấm "Ảnh chính" ở gallery
 const setAsMainImage = (index) => {
     if (index <= 0) return;
     const temp = productForm.images[0];
@@ -225,7 +213,6 @@ const setAsMainImage = (index) => {
 };
 
 </script>
-
 <template>
   <div class="flex gap-6">
 
@@ -293,28 +280,22 @@ const setAsMainImage = (index) => {
         </div>
       </div>
 
-      <!-- MATERIAL + SIZE -->
+      <!-- MATERIAL + COLOR -->
       <div class="flex gap-4 mb-4">
         <div class="flex-1">
           <label class="font-medium">Chất liệu</label>
           <InputText v-model="productForm.material" class="w-full" />
         </div>
         <div class="flex-1">
-          <label class="font-medium">Kích thước</label>
-          <InputText v-model="productForm.size" class="w-full" />
-        </div>
-      </div>
-
-      <!-- COLOR + WEIGHT -->
-      <div class="flex gap-4 mb-4">
-        <div class="flex-1">
           <label class="font-medium">Màu sắc</label>
           <InputText v-model="productForm.color" class="w-full" />
         </div>
-        <div class="flex-1">
-          <label class="font-medium">Khối lượng</label>
-          <InputText v-model="productForm.weight" class="w-full" />
-        </div>
+      </div>
+
+      <!-- WEIGHT -->
+      <div class="mb-4">
+        <label class="font-medium">Khối lượng</label>
+        <InputText v-model="productForm.weight" class="w-full" />
       </div>
 
       <!-- LENGTH + WIDTH + HEIGHT -->
@@ -338,111 +319,57 @@ const setAsMainImage = (index) => {
     <!-- RIGHT SIDEBAR -->
     <div class="right-sidebar w-[330px] flex flex-col gap-6">
 
-      <!-- FEATURED IMAGE -->
-     <!-- DIV ẢNH CHÍNH -->
-<div class="bg-white p-4 rounded-lg shadow mb-4">
-  <h3 class="font-semibold mb-2">Ảnh đại diện</h3>
+      <!-- MAIN IMAGE -->
+      <div class="bg-white p-4 rounded-lg shadow mb-4">
+        <h3 class="font-semibold mb-2">Ảnh đại diện</h3>
 
-  <!-- MAIN IMAGE UPLOAD -->
-  <FileUpload
-    ref="mainUpload"
-    accept="image/*"
-    mode="basic"
-    customUpload
-    chooseLabel="Chọn ảnh đại diện"
-    @select="onSelectMainImage"
-    class="w-full"
-  >
-    <!-- Tùy chỉnh slot để thêm style giống advanced -->
-    <template #content>
-      <button
-        type="button"
-        class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded shadow transition duration-200"
-      >
-        Chọn ảnh đại diện
-      </button>
-    </template>
-  </FileUpload>
+        <FileUpload
+          ref="mainUpload"
+          accept="image/*"
+          mode="basic"
+          customUpload
+          chooseLabel="Chọn ảnh đại diện"
+          @select="onSelectMainImage"
+          class="w-full"
+        >
+          <template #content>
+            <button
+              type="button"
+              class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded shadow"
+            >
+              Chọn ảnh đại diện
+            </button>
+          </template>
+        </FileUpload>
 
-  <!-- HIỂN THỊ ẢNH CHÍNH -->
-  <div v-if="productForm.images.length > 0 && productForm.images[0]?.file" class="mt-3 relative">
-    <img
-      :src="productForm.images[0].objectURL"
-      class="w-full h-44 object-cover rounded shadow"
-    />
-    <button
-      @click="removeMainImage"
-      class="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white text-sm px-2 py-1 rounded shadow transition duration-200"
-    >
-      Xóa
-    </button>
-  </div>
+        <div v-if="productForm.images.length > 0 && productForm.images[0]?.file" class="mt-3 relative">
+          <img
+            :src="productForm.images[0].objectURL"
+            class="w-full h-44 object-cover rounded shadow"
+          />
+          <button
+            @click="removeMainImage"
+            class="absolute top-1 right-1 bg-red-500 text-white text-sm px-2 py-1 rounded shadow"
+          >
+            Xóa
+          </button>
+        </div>
 
-  <!-- ERROR -->
-  <p class="err mt-1 text-red-500 text-sm" v-if="errors.images">{{ errors.images }}</p>
-</div>
-
-
-<!-- DIV ẢNH PHỤ (GALLERY) -->
-<div class="bg-white p-4 rounded-lg shadow">
-  <h3 class="font-semibold mb-2">Ảnh phụ</h3>
-
-  <!-- GALLERY UPLOAD -->
-  <FileUpload
-    accept="image/*"
-    mode="advanced"
-    customUpload
-    chooseLabel="Chọn ảnh phụ"
-    @select="onSelectGalleryImages"
-  />
-
-  <!-- HIỂN THỊ GALLERY -->
-  <!-- <div class="flex mt-3 flex-wrap gap-2">
-    <div
-      v-for="(g, i) in productForm.images"
-      v-if="i > 0"
-      :key="i"
-      class="w-20 h-20 relative"
-    >
-      <img :src="g.objectURL" class="w-full h-full object-cover rounded shadow" />
-      <button
-        @click="removeGalleryImage(i)"
-        class="absolute top-1 right-1 bg-red-500 text-white text-xs px-1 py-0.5 rounded shadow"
-      >
-        Xóa
-      </button>
-      <button
-        @click="setAsMainImage(i)"
-        class="absolute bottom-1 left-1 bg-white text-xs px-1 rounded shadow"
-      >
-        Ảnh chính
-      </button>
-    </div>
-  </div> -->
-</div>
-
-
+        <p class="err mt-1 text-red-500 text-sm" v-if="errors.images">{{ errors.images }}</p>
+      </div>
 
       <!-- GALLERY -->
-      <!-- <div class="bg-white p-4 rounded-lg shadow">
-        <h3 class="font-semibold mb-2">Ảnh thư viện</h3>
-        <div class="flex mt-3 flex-wrap gap-2">
-          <div
-            v-for="(g, i) in productForm.images"
-            v-if="i > 0"
-            :key="i"
-            class="w-20 h-20 relative"
-          >
-            <img :src="g.objectURL" class="w-full h-full object-cover rounded shadow" />
-            <button
-              @click="setAsMainImage(i)"
-              class="absolute bottom-1 left-1 bg-white text-xs px-1 rounded shadow"
-            >
-              Ảnh chính
-            </button>
-          </div>
-        </div>
-      </div> -->
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold mb-2">Ảnh phụ</h3>
+
+        <FileUpload
+          accept="image/*"
+          mode="advanced"
+          customUpload
+          chooseLabel="Chọn ảnh phụ"
+          @select="onSelectGalleryImages"
+        />
+      </div>
 
       <!-- STATUS -->
       <div class="bg-white p-4 rounded-lg shadow">

@@ -139,7 +139,7 @@ function createMiniSuccessChart(labels, value) {
         </div>
       </div>
       <span class="text-primary font-medium">{{ newOrders }}</span>
-      <span class="text-muted-color"> Đơn mới từ lần truy cập trước</span>
+      <span class="text-muted-color"> Đơn mới so với tháng trước</span>
       <div class="mt-2 h-12">
         <Chart v-if="miniOrdersChart" type="line" :data="miniOrdersChart"
           :options="{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{x:{display:false},y:{display:false}}}"
@@ -161,7 +161,7 @@ function createMiniSuccessChart(labels, value) {
         </div>
       </div>
       <span class="text-primary font-medium">%{{ revenueGrowth }}</span>
-      <span class="text-muted-color"> so với tuần trước</span>
+      <span class="text-muted-color"> so với tháng trước</span>
       <div class="mt-2 h-12">
         <Chart v-if="miniRevenueChart" type="line" :data="miniRevenueChart"
           :options="{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{x:{display:false},y:{display:false}}}"

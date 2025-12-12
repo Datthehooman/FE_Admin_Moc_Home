@@ -51,12 +51,19 @@ async function fetchCustomerByRegion() {
 function buildChart() {
     const ctx = document.createElement("canvas").getContext("2d");
 
+    // 🌊 Gradient xanh nước biển neon — cho Miền Bắc
+    const gradientBlue = ctx.createLinearGradient(0, 0, 0, 300);
+    gradientBlue.addColorStop(0, "rgba(0,128,255,0.9)");
+    gradientBlue.addColorStop(1, "rgba(0,128,255,0.3)");
+
+    // 🌿 Gradient xanh lá neon — Miền Trung
     const gradientGreen = ctx.createLinearGradient(0, 0, 0, 300);
-    gradientGreen.addColorStop(0, "rgba(0,255,127,0.9)"); // xanh lá neon
+    gradientGreen.addColorStop(0, "rgba(0,255,127,0.9)");
     gradientGreen.addColorStop(1, "rgba(0,255,127,0.3)");
 
+    // 💗 Gradient hồng neon — Miền Nam
     const gradientPink = ctx.createLinearGradient(0, 0, 0, 300);
-    gradientPink.addColorStop(0, "rgba(255,20,147,0.9)"); // hồng neon
+    gradientPink.addColorStop(0, "rgba(255,20,147,0.9)");
     gradientPink.addColorStop(1, "rgba(255,20,147,0.3)");
 
     chartData.value = {
@@ -65,10 +72,18 @@ function buildChart() {
             {
                 label: "Số khách hàng",
                 data: customers.value,
-                backgroundColor: [gradientPink, gradientGreen, gradientPink],
+                backgroundColor: [
+                    gradientBlue,   // Miền Bắc neon
+                    gradientGreen,  // Miền Trung neon
+                    gradientPink    // Miền Nam neon
+                ],
                 borderRadius: 12,
                 barThickness: 40,
-                hoverBackgroundColor: ["rgba(255,20,147,1)", "rgba(0,255,127,1)", "rgba(255,20,147,1)"],
+                hoverBackgroundColor: [
+                    "rgba(0,128,255,1)",
+                    "rgba(0,255,127,1)",
+                    "rgba(255,20,147,1)"
+                ]
             }
         ]
     };
@@ -79,9 +94,7 @@ function buildChart() {
         plugins: {
             tooltip: {
                 callbacks: {
-                    label: function(context) {
-                        return context.dataset.label + ": " + context.parsed.y;
-                    }
+                    label: (context) => context.dataset.label + ": " + context.parsed.y
                 }
             },
             legend: { display: false }
@@ -103,6 +116,7 @@ function buildChart() {
         }
     };
 }
+
 
 watch([isDarkTheme], () => buildChart());
 onMounted(() => fetchCustomerByRegion());
