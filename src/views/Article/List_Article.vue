@@ -138,7 +138,6 @@ async function deleteArticle(article) {
             <template #header>
                 <div class="flex justify-between">
                     <div class="flex gap-2">
-                        <Button type="button" icon="pi pi-plus" label="Thêm mới" severity="success" @click="router.push('/Article/Create_Article')" />
                         <Button type="button" icon="pi pi-filter-slash" label="Xoá lọc" outlined @click="clearFilter()" />
                     </div>
                     <IconField>
