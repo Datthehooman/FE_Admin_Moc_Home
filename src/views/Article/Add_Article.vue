@@ -7,7 +7,7 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import FileUpload from 'primevue/fileupload'; // Giữ import FileUpload nhưng không dùng logic gửi file
 import InputText from 'primevue/inputtext';
-import { onBeforeMount, reactive, ref } from 'vue';
+import { onBeforeMount, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
@@ -15,6 +15,7 @@ const router = useRouter();
 
 const categories = ref([]);
 const editorRef = ref(null);
+const thumbnailPreview = ref(null);
 
 const articleForm = reactive({
     title: '',
@@ -33,6 +34,18 @@ const errors = reactive({
     content: ''
     // Không cần errors.thumbnail_image nếu không bắt buộc
 });
+
+const slugify = (text) => {
+    return text
+        .toLowerCase()
+        .normalize('NFD') // break accents
+        .replace(/[\u0300-\u036f]/g, '') // remove tone marks
+        .replace(/đ/g, 'd') // special Vietnamese letter
+        .replace(/[^a-z0-9\s-]/g, '') // remove special chars
+        .trim()
+        .replace(/\s+/g, '-') // spaces -> dash
+        .replace(/-+/g, '-'); // collapse multiple dashes
+};
 
 const loading = ref(false);
 const categoryLoading = ref(true);
@@ -111,6 +124,10 @@ const onUploadThumbnail = async (event) => {
     const file = event.files[0];
     if (!file) return;
 
+    // --- Generate preview locally ---
+    thumbnailPreview.value = URL.createObjectURL(file);
+
+    // --- Upload to server ---
     const form = new FormData();
     form.append('upload', file);
 
@@ -119,7 +136,7 @@ const onUploadThumbnail = async (event) => {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
 
-        articleForm.thumbnail = res.data.url; // Lưu URL vào form
+        articleForm.thumbnail = res.data.url;
         console.log('Thumbnail URL:', articleForm.thumbnail);
     } catch (err) {
         console.error('Upload thumbnail lỗi:', err);
@@ -185,6 +202,16 @@ const submitForm = async () => {
         loading.value = false;
     }
 };
+
+watch(
+    () => articleForm.title,
+    (newTitle) => {
+        if (!articleForm.slug || articleForm.slug === slugify(articleForm.oldTitle || '')) {
+            articleForm.slug = slugify(newTitle);
+        }
+        articleForm.oldTitle = newTitle; // track previous title
+    }
+);
 </script>
 
 <template>
@@ -219,9 +246,14 @@ const submitForm = async () => {
             </div>
 
             <div class="flex flex-col gap-1 w-full">
-                <label for="thumbnail_image">Hình ảnh Thumbnail (Đại diện) [Không bắt buộc lúc này]</label>
+                <label for="thumbnail_image">Hình ảnh Thumbnail (Đại diện)</label>
+
                 <FileUpload id="thumbnail_image" v-model="articleForm.thumbnail_image" mode="basic" name="thumbnail" accept="image/*" :maxFileSize="1000000" :fileLimit="1" chooseLabel="Chọn ảnh" class="w-full" @select="onUploadThumbnail" />
-                <span v-if="errors.thumbnail_image" class="text-red-600 text-sm">{{ errors.thumbnail_image }}</span>
+
+                <!-- PREVIEW -->
+                <div v-if="thumbnailPreview" class="mt-3">
+                    <img :src="thumbnailPreview" alt="Preview" class="w-40 h-40 object-cover rounded-md border" />
+                </div>
             </div>
 
             <div class="flex flex-col gap-1 w-full">
