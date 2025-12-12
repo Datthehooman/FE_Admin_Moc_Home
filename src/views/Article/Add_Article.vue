@@ -74,6 +74,38 @@ const validateForm = () => {
     return !Object.values(errors).some((e) => e);
 };
 
+const onUploadImg = async (files, callback) => {
+    const res = await Promise.all(
+        files.map((file) => {
+            return new Promise((rev, rej) => {
+                const form = new FormData();
+                form.append('upload', file);
+
+                apiClient
+                    .post('/articles/upload-image', form, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    })
+                    .then((res) => rev(res))
+                    .catch((error) => rej(error));
+            });
+        })
+    );
+
+    // Approach 1
+    callback(res.map((item) => item.data.url));
+
+    // Approach 2
+    // callback(
+    //   res.map((item: any) => ({
+    //     url: item.data.url,
+    //     alt: 'alt',
+    //     title: 'title'
+    //   }))
+    // );
+};
+
 const submitForm = async () => {
     if (!validateForm()) return;
 
@@ -172,7 +204,7 @@ const submitForm = async () => {
 
             <div class="flex flex-col gap-1 w-full">
                 <label for="content">Nội dung bài viết (Markdown)</label>
-                <MdEditor ref="editorRef" v-model="articleForm.content" language="en" :height="500" class="mt-2" />
+                <MdEditor ref="editorRef" v-model="articleForm.content" language="en" :height="500" class="mt-2" @onUploadImg="onUploadImg" />
                 <span v-if="errors.content" class="text-red-600 text-sm mt-1">{{ errors.content }}</span>
             </div>
 
