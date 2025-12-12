@@ -113,7 +113,7 @@ onMounted(loadProduct);
       </div>
 
       <div class="flex gap-4 mt-2">
-        <Tag :value="product.quantity > 0 ? 'Còn hàng' : 'Hết hàng'" :severity="product.quantity > 0 ? 'success' : 'danger'"/>
+        <Tag :value="product.stock_quantity > 0 ? 'Còn hàng' : 'Hết hàng'" :severity="product.stock_quantity > 0 ? 'success' : 'danger'"/>
         <Tag :value="`Đã bán: ${formatNumber(product.sold)}`" severity="info"/>
         <Tag :value="`Lượt xem: ${formatNumber(product.view)}`" severity="warning"/>
       </div>

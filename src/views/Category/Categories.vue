@@ -25,12 +25,10 @@ const categories = ref([]);
 const filters = ref(null);
 const loading = ref(true);
 
-// Load danh sách categories trước khi mount
 onBeforeMount(async () => {
     await loadCategories();
 });
 
-// Load categories
 async function loadCategories() {
     loading.value = true;
     try {
@@ -47,7 +45,6 @@ async function loadCategories() {
     }
 }
 
-// Khởi tạo filter cho từng cột
 function initFilters() {
     filters.value = {
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -57,7 +54,6 @@ function initFilters() {
     };
 }
 
-// Xóa category
 const deleteCategory = async (category, event) => {
     confirm.require({
         target: event.currentTarget,
@@ -95,9 +91,6 @@ const deleteCategory = async (category, event) => {
                     life: 3000
                 });
             }
-        },
-        reject: () => {
-            // User rejected, do nothing
         }
     });
 };
@@ -105,7 +98,8 @@ const deleteCategory = async (category, event) => {
 
 <template>
     <div class="card flex-1">
-        <ConfirmPopup></ConfirmPopup>
+        <ConfirmPopup />
+
         <h2 class="font-semibold text-xl mb-4">Danh Sách Danh Mục</h2>
 
         <DataTable
@@ -122,10 +116,8 @@ const deleteCategory = async (category, event) => {
             rowHover
             tableStyle="min-width: 60rem"
         >
-            <!-- HEADER với MultiSelect filter trạng thái + global search -->
             <template #header>
                 <div class="flex justify-between items-center gap-4">
-                    <!-- Filter trạng thái -->
                     <MultiSelect
                         v-model="filters.is_active.value"
                         :options="[
@@ -141,59 +133,41 @@ const deleteCategory = async (category, event) => {
                         metaKeySelection="false"
                     />
 
-                    <!-- Global search -->
-                    <InputText v-model="filters.global.value" placeholder="Tìm kiếm danh mục..." class="border p-1 rounded w-1/4" />
+                    <InputText
+                        v-model="filters.global.value"
+                        placeholder="Tìm kiếm danh mục..."
+                        class="border p-1 rounded w-1/4"
+                    />
                 </div>
             </template>
 
             <template #empty> Không có danh mục nào. </template>
             <template #loading> Đang tải dữ liệu...</template>
 
-            <!-- Tên danh mục -->
             <Column field="category_name" header="Tên danh mục" sortable>
                 <template #body="{ data }">{{ data.category_name }}</template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" placeholder="Tìm kiếm tên danh mục" />
-                </template>
             </Column>
 
-            <!-- Mô tả -->
+            <!-- MÔ TẢ (đã thu gọn ...) -->
             <Column field="description" header="Mô tả" sortable>
                 <template #body="{ data }">{{ data.description }}</template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" placeholder="Tìm kiếm mô tả" />
-                </template>
             </Column>
 
-            <!-- Trạng thái -->
             <Column field="is_active" header="Trạng thái" sortable>
                 <template #body="{ data }">
-                    <Tag :value="Number(data.is_active) === 1 ? 'Hiển thị' : 'Ẩn'" :severity="Number(data.is_active) === 1 ? 'success' : 'danger'" />
-                </template>
-                <template #filter="{ filterModel }">
-                    <MultiSelect
-                        v-model="filterModel.value"
-                        :options="[
-                            { label: 'Hiển thị', value: 1 },
-                            { label: 'Ẩn', value: 0 }
-                        ]"
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="Chọn trạng thái"
-                        display="chip"
-                        class="w-full"
-                        :showSelectAll="true"
-                        metaKeySelection="false"
-                    />
+                    <Tag :value="Number(data.is_active) === 1 ? 'Hiển thị' : 'Ẩn'"
+                         :severity="Number(data.is_active) === 1 ? 'success' : 'danger'" />
                 </template>
             </Column>
 
-            <!-- Hành động -->
             <Column header="Hành động" style="min-width: 10rem">
                 <template #body="{ data }">
                     <div class="flex gap-2">
-                        <Button icon="pi pi-pencil" text severity="primary" @click="router.push(`/Category/Edit_Category/${data.id}`)" />
-                        <Button icon="pi pi-trash" text severity="danger" @click="(e) => deleteCategory(data, e)" />
+                        <Button icon="pi pi-pencil" text severity="primary"
+                                @click="router.push(`/Category/Edit_Category/${data.id}`)" />
+
+                        <Button icon="pi pi-trash" text severity="danger"
+                                @click="(e) => deleteCategory(data, e)" />
                     </div>
                 </template>
             </Column>
@@ -205,6 +179,14 @@ const deleteCategory = async (category, event) => {
 :deep(.p-datatable-scrollable .p-datatable-thead > tr > th),
 :deep(.p-datatable-scrollable .p-datatable-tbody > tr > td) {
     white-space: nowrap;
+}
+
+/* THU GỌN CỘT MÔ TẢ (CỘT THỨ 2) */
+:deep(.p-datatable-tbody > tr > td:nth-child(2)) {
+    max-width: 200px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .card.flex-1 {
