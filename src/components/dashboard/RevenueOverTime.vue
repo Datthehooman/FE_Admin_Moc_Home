@@ -136,7 +136,7 @@ function buildChart() {
                 position: "left",
                 ticks: { color: isDarkTheme.value ? "#fff" : "#333" },
                 grid: { color: isDarkTheme.value ? "rgba(255,255,255,0.1)" : "#eee" }
-            },a
+            },
             y1: {
                 type: "linear",
                 position: "right",
