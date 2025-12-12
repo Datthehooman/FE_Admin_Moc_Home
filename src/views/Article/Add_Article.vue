@@ -22,6 +22,7 @@ const articleForm = reactive({
     category_id: null,
     status: 'Hiện', // Mặc định là 'Hiện' (tương ứng với 1)
     thumbnail_image: [], // Giữ lại cho component FileUpload
+    thumbnail: '',
     content: '## Tiêu đề bài viết\n\nViết nội dung bài viết bằng Markdown tại đây.'
 });
 
@@ -106,6 +107,26 @@ const onUploadImg = async (files, callback) => {
     // );
 };
 
+const onUploadThumbnail = async (event) => {
+    const file = event.files[0];
+    if (!file) return;
+
+    const form = new FormData();
+    form.append('upload', file);
+
+    try {
+        const res = await apiClient.post('/articles/upload-image', form, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        articleForm.thumbnail = res.data.url; // Lưu URL vào form
+        console.log('Thumbnail URL:', articleForm.thumbnail);
+    } catch (err) {
+        console.error('Upload thumbnail lỗi:', err);
+        alert('Upload thumbnail thất bại!');
+    }
+};
+
 const submitForm = async () => {
     if (!validateForm()) return;
 
@@ -118,7 +139,8 @@ const submitForm = async () => {
             slug: articleForm.slug.trim(),
             category_id: articleForm.category_id,
             status: articleForm.status === 'Hiện' ? 1 : 0,
-            content: articleForm.content
+            content: articleForm.content,
+            thumbnail: articleForm.thumbnail || ''
             // THÊM TRƯỜNG THUMBNAIL GIẢ (Nếu BE bắt buộc phải có key này)
             // Nếu lỗi 400 vẫn xảy ra, hãy thử thêm dòng này
             // thumbnail: ''
@@ -198,7 +220,7 @@ const submitForm = async () => {
 
             <div class="flex flex-col gap-1 w-full">
                 <label for="thumbnail_image">Hình ảnh Thumbnail (Đại diện) [Không bắt buộc lúc này]</label>
-                <FileUpload id="thumbnail_image" v-model="articleForm.thumbnail_image" mode="basic" name="thumbnail" accept="image/*" :maxFileSize="1000000" :fileLimit="1" chooseLabel="Chọn ảnh" class="w-full" />
+                <FileUpload id="thumbnail_image" v-model="articleForm.thumbnail_image" mode="basic" name="thumbnail" accept="image/*" :maxFileSize="1000000" :fileLimit="1" chooseLabel="Chọn ảnh" class="w-full" @select="onUploadThumbnail" />
                 <span v-if="errors.thumbnail_image" class="text-red-600 text-sm">{{ errors.thumbnail_image }}</span>
             </div>
 

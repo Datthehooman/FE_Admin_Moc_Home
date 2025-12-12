@@ -3,10 +3,10 @@ import { FilterMatchMode } from '@primevue/core/api';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
-import Select from 'primevue/select';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
+import Select from 'primevue/select';
 import Tag from 'primevue/tag';
 import { onBeforeMount, ref } from 'vue';
 
@@ -92,16 +92,14 @@ async function deleteCategory(category) {
 
     try {
         // Gọi API DELETE tới endpoint /article-categories/{id}
-        await apiClient.delete(`/article-categories/${category.id}`, {
-            headers: { Authorization: `Bearer ${authStore.token}` } // Truyền token xác thực
-        });
+        await apiClient.delete(`/article-categories/${category.id}`);
 
         // Xóa danh mục khỏi danh sách trên giao diện
         categories.value = categories.value.filter((c) => c.id !== category.id);
         alert('✅ Xóa danh mục thành công!');
     } catch (err) {
         console.error('❌ Lỗi xóa danh mục:', err.response?.data || err);
-        
+
         // --- BẮT LỖI 409 CỤ THỂ ---
         if (err.response && err.response.status === 409) {
             alert(`❌ KHÔNG THỂ XÓA DANH MỤC! \n\nDanh mục "${category.name}" hiện đang chứa bài viết. \n\nVui lòng xóa hết các bài viết thuộc danh mục này trước khi thực hiện xóa danh mục.`);
@@ -111,8 +109,6 @@ async function deleteCategory(category) {
         // -----------------------------
     }
 }
-
-
 
 // Khởi tạo bộ lọc (Không đổi)
 function initFilters() {
@@ -252,10 +248,11 @@ function navigateToEdit(id) {
                 </template>
             </Column>
 
-            <Column header="Hành động" style="min-width: 15rem" :sortable="false"> <template #body="{ data }">
+            <Column header="Hành động" style="min-width: 15rem" :sortable="false">
+                <template #body="{ data }">
                     <div class="flex gap-2 items-center">
                         <Button icon="pi pi-pencil" text severity="warning" @click="navigateToEdit(data.id)" />
-                        <Button icon="pi pi-trash" text severity="danger" @click="deleteCategory(data)" /> 
+                        <Button icon="pi pi-trash" text severity="danger" @click="deleteCategory(data)" />
 
                         <Select :options="categoryStatuses" optionLabel="label" optionValue="value" v-model="data.status" @change="updateCategoryStatus(data, data.status)" class="w-full">
                             <template #value="{ value }">
