@@ -25,7 +25,7 @@ const loading = ref(true);
 const multiSortMeta = ref([{ field: 'order_status', order: -1 }]);
 
 const orderStatuses = ['pending', 'confirmed', 'processing', 'shipping', 'completed', 'cancelled'];
-const paymentStatuses = ['paid', 'unpaid'];
+const paymentStatuses = ['unpaid', 'pending', 'paid', 'partially_paid', 'refunded', 'awaiting_deposit', 'awaiting_vnpay_response'];
 
 // Define sort order for statuses (earlier in array = higher priority)
 const statusSortOrder = {
@@ -47,9 +47,27 @@ const orderStatusLabels = {
 };
 
 const paymentStatusLabels = {
+    unpaid: 'Chưa thanh toán',
+    pending: 'Đang chờ thanh toán',
     paid: 'Đã thanh toán',
-    unpaid: 'Chưa thanh toán'
+    partially_paid: 'Thanh toán một phần',
+    refunded: 'Đã hoàn tiền',
+    awaiting_deposit: 'Đang đợi xử lý đặt cọc',
+    awaiting_vnpay_response: 'Chờ phản hồi VNPay'
 };
+
+function getPaymentStatusSeverity(status) {
+    const severityMap = {
+        unpaid: 'danger',
+        pending: 'warning',
+        paid: 'success',
+        partially_paid: 'info',
+        refunded: 'warning',
+        awaiting_deposit: 'warning',
+        awaiting_vnpay_response: 'info'
+    };
+    return severityMap[status] || 'secondary';
+}
 
 onBeforeMount(() => {
     loadOrders();
@@ -291,7 +309,7 @@ function getStatusSeverity(status) {
             <!-- Thanh toán -->
             <Column header="Thanh toán" style="min-width: 12rem" field="payment_status" sortable filterField="payment_status">
                 <template #body="{ data }">
-                    <Tag :value="paymentStatusLabels[data.payment_status]" :severity="data.payment_status === 'paid' ? 'success' : 'danger'" />
+                    <Tag :value="paymentStatusLabels[data.payment_status]" :severity="getPaymentStatusSeverity(data.payment_status)" />
                 </template>
                 <template #filter="{ filterModel }">
                     <Dropdown v-model="filterModel.value" :options="paymentStatuses" placeholder="Chọn trạng thái" showClear>
