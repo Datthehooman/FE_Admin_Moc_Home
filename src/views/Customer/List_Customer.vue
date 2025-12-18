@@ -8,6 +8,7 @@ import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
+import { useToast } from 'primevue/usetoast';
 import { onBeforeMount, ref } from 'vue';
 
 import apiClient from '@/api/axios';
@@ -18,6 +19,8 @@ const router = useRouter();
 const customers = ref([]);
 const filters = ref(null);
 const loading = ref(true);
+const updatingRoles = ref({});
+const toast = useToast();
 
 const userStatuses = ['0', '1'];
 
@@ -29,8 +32,16 @@ const userStatusLabels = {
 const userRoleLabels = {
     0: 'Customer',
     1: 'Admin',
-    2: 'VIP'
+    2: 'Potential Customer',
+    3: 'VIP'
 };
+
+const userRoleOptions = [
+    { label: 'Customer', value: '0' },
+    { label: 'Admin', value: '1' },
+    { label: 'Potential Customer', value: '2' },
+    { label: 'VIP', value: '3' }
+];
 
 onBeforeMount(() => {
     loadCustomers();
@@ -41,7 +52,6 @@ async function loadCustomers() {
     try {
         const response = await apiClient.get('/customer/list');
         customers.value = response.data?.result?.data || [];
-        // Convert date strings to Date objects
         customers.value.forEach((customer) => {
             if (customer.created_at) {
                 customer.created_at = new Date(customer.created_at);
@@ -49,6 +59,7 @@ async function loadCustomers() {
         });
     } catch (err) {
         console.error('Lỗi tải danh sách khách hàng:', err);
+        toast.add({ severity: 'error', summary: 'Lỗi', detail: 'Không thể tải danh sách khách hàng', life: 3000 });
         customers.value = [];
     } finally {
         loading.value = false;
@@ -66,10 +77,6 @@ function initFilters() {
         status: { value: null, matchMode: FilterMatchMode.EQUALS },
         role: { value: null, matchMode: FilterMatchMode.EQUALS }
     };
-}
-
-function formatDate(v) {
-    return new Date(v).toLocaleDateString('vi-VN');
 }
 
 function clearFilter() {
@@ -96,9 +103,32 @@ function getRoleSeverity(role) {
     const severityMap = {
         0: 'info',
         1: 'danger',
-        2: 'warning'
+        2: 'warning',
+        3: 'success'
     };
     return severityMap[role] || 'secondary';
+}
+
+async function updateUserRole(userId, newRole) {
+    updatingRoles.value[userId] = true;
+    try {
+        const response = await apiClient.post(`/customer/${userId}/update-role`, {
+            new_role: parseInt(newRole)
+        });
+
+        if (response.data?.status) {
+            const customer = customers.value.find((c) => c.user_id === userId);
+            if (customer) {
+                customer.role = newRole;
+            }
+            toast.add({ severity: 'success', summary: 'Thành công', detail: 'Cập nhật vai trò thành công', life: 3000 });
+        }
+    } catch (err) {
+        console.error('Lỗi cập nhật vai trò:', err);
+        toast.add({ severity: 'error', summary: 'Lỗi', detail: 'Không thể cập nhật vai trò', life: 3000 });
+    } finally {
+        updatingRoles.value[userId] = false;
+    }
 }
 </script>
 
@@ -140,13 +170,6 @@ function getRoleSeverity(role) {
             <template #empty>Không có khách hàng nào.</template>
             <template #loading>Đang tải dữ liệu...</template>
 
-            <!-- ID -->
-            <Column field="user_id" header="ID" style="min-width: 8rem" sortable>
-                <template #body="{ data }">
-                    {{ data.user_id }}
-                </template>
-            </Column>
-
             <!-- Tên khách hàng -->
             <Column header="Tên khách hàng" style="min-width: 14rem" sortable sortField="full_name" filterField="full_name">
                 <template #body="{ data }">
@@ -165,16 +188,6 @@ function getRoleSeverity(role) {
                 </template>
             </Column>
 
-            <!-- Email -->
-            <Column header="Email" style="min-width: 16rem" field="email" sortable filterField="email">
-                <template #body="{ data }">
-                    {{ data.email }}
-                </template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" placeholder="Tìm theo email..." />
-                </template>
-            </Column>
-
             <!-- Điện thoại -->
             <Column header="Điện thoại" style="min-width: 12rem" field="phone" sortable filterField="phone">
                 <template #body="{ data }">
@@ -182,13 +195,6 @@ function getRoleSeverity(role) {
                 </template>
                 <template #filter="{ filterModel }">
                     <InputText v-model="filterModel.value" type="text" placeholder="Tìm theo số điện thoại..." />
-                </template>
-            </Column>
-
-            <!-- Ngày tạo -->
-            <Column header="Ngày tạo" style="min-width: 10rem" field="created_at" sortable dataType="date" filterField="created_at">
-                <template #body="{ data }">
-                    {{ formatDate(data.created_at) }}
                 </template>
             </Column>
 
@@ -229,9 +235,19 @@ function getRoleSeverity(role) {
             </Column>
 
             <!-- Hành động -->
-            <Column header="Hành động" style="min-width: 12rem" :sortable="false">
+            <Column header="Hành động" style="min-width: 18rem" :sortable="false">
                 <template #body="{ data }">
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 items-center">
+                        <Select
+                            :modelValue="data.role"
+                            :options="userRoleOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            @update:modelValue="updateUserRole(data.user_id, $event)"
+                            :loading="updatingRoles[data.user_id]"
+                            placeholder="Đổi vai trò"
+                            style="min-width: 12rem"
+                        />
                         <Button icon="pi pi-eye" text severity="info" @click="router.push(`/Customers/Detail_Customer/${data.user_id}`)" />
                     </div>
                 </template>

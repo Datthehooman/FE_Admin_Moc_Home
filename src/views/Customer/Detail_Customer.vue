@@ -7,6 +7,7 @@ import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import ConfirmPopup from 'primevue/confirmpopup';
+import Select from 'primevue/select';
 import Tag from 'primevue/tag';
 
 import apiClient from '@/api/axios';
@@ -22,6 +23,22 @@ const userId = route.params.id;
 // DATA
 const customer = ref(null);
 const loading = ref(true);
+const updatingRole = ref(false);
+
+// ROLE OPTIONS
+const userRoleLabels = {
+    0: 'Customer',
+    1: 'Admin',
+    2: 'Potential Customer',
+    3: 'VIP'
+};
+
+const userRoleOptions = [
+    { label: 'Customer', value: '0' },
+    { label: 'Admin', value: '1' },
+    { label: 'Potential Customer', value: '2' },
+    { label: 'VIP', value: '3' }
+];
 
 // LOAD CUSTOMER DETAIL
 async function loadCustomerDetail() {
@@ -30,6 +47,7 @@ async function loadCustomerDetail() {
         customer.value = res.data?.result?.data;
     } catch (e) {
         console.error('Lỗi load khách hàng:', e);
+        toast.add({ severity: 'error', summary: 'Lỗi', detail: 'Không thể tải thông tin khách hàng', life: 3000 });
     } finally {
         loading.value = false;
     }
@@ -42,6 +60,40 @@ const formatNumber = (n) => Number(n).toLocaleString('vi-VN');
 
 function formatDate(v) {
     return new Date(v).toLocaleDateString('vi-VN');
+}
+
+function getRoleLabel(role) {
+    return userRoleLabels[role] || role;
+}
+
+function getRoleSeverity(role) {
+    const severityMap = {
+        0: 'info',
+        1: 'danger',
+        2: 'warning',
+        3: 'success'
+    };
+    return severityMap[role] || 'secondary';
+}
+
+// UPDATE ROLE
+async function updateRole(newRole) {
+    updatingRole.value = true;
+    try {
+        const response = await apiClient.post(`/customer/${userId}/update-role`, {
+            new_role: parseInt(newRole)
+        });
+
+        if (response.data?.status) {
+            customer.value.role = newRole;
+            toast.add({ severity: 'success', summary: 'Thành công', detail: 'Cập nhật vai trò thành công', life: 3000 });
+        }
+    } catch (err) {
+        console.error('Lỗi cập nhật vai trò:', err);
+        toast.add({ severity: 'error', summary: 'Lỗi', detail: 'Không thể cập nhật vai trò', life: 3000 });
+    } finally {
+        updatingRole.value = false;
+    }
 }
 
 // BLACKLIST ACTIONS
@@ -124,7 +176,11 @@ const toggleBlacklist = (event) => {
                         <span class="ml-2">{{ formatDate(customer.created_at) }}</span>
                     </div>
                     <div>
-                        <strong>Vai trò:</strong> <span class="ml-2">{{ customer.role }}</span>
+                        <strong>Vai trò:</strong>
+                        <div class="mt-2 flex items-center gap-2">
+                            <Tag :value="getRoleLabel(customer.role)" :severity="getRoleSeverity(customer.role)" />
+                            <Select :modelValue="customer.role" :options="userRoleOptions" optionLabel="label" optionValue="value" @update:modelValue="updateRole" :loading="updatingRole" placeholder="Đổi vai trò" style="min-width: 10rem" />
+                        </div>
                     </div>
                     <div>
                         <strong>Google ID:</strong> <span class="ml-2">{{ customer.google_id || 'N/A' }}</span>
