@@ -27,6 +27,64 @@ const loading = ref(true);
 
 const orderStatuses = ['pending', 'confirmed', 'processing', 'shipping', 'completed', 'cancelled'];
 
+// Order Status Labels
+const orderStatusLabels = {
+    pending: 'Chờ xác nhận',
+    confirmed: 'Đã xác nhận',
+    processing: 'Đang xử lý',
+    shipping: 'Đang giao',
+    completed: 'Hoàn thành',
+    cancelled: 'Đã huỷ'
+};
+
+// Payment Status Labels
+const paymentStatusLabels = {
+    unpaid: 'Chưa thanh toán',
+    pending: 'Đang chờ thanh toán',
+    paid: 'Đã thanh toán',
+    partially_paid: 'Thanh toán một phần',
+    refunded: 'Đã hoàn tiền',
+    awaiting_deposit: 'Đang đợi xử lý đặt cọc',
+    awaiting_vnpay_response: 'Chờ phản hồi VNPay'
+};
+
+// Get order status label
+function getOrderStatusLabel(status) {
+    return orderStatusLabels[status] || status;
+}
+
+// Get payment status label
+function getPaymentStatusLabel(status) {
+    return paymentStatusLabels[status] || status;
+}
+
+// Get order status severity
+function getOrderStatusSeverity(status) {
+    const severityMap = {
+        pending: 'warning',
+        confirmed: 'info',
+        processing: 'help',
+        shipping: 'primary',
+        completed: 'success',
+        cancelled: 'danger'
+    };
+    return severityMap[status] || 'secondary';
+}
+
+// Get payment status severity
+function getPaymentStatusSeverity(status) {
+    const severityMap = {
+        unpaid: 'danger',
+        pending: 'warning',
+        paid: 'success',
+        partially_paid: 'info',
+        refunded: 'warning',
+        awaiting_deposit: 'warning',
+        awaiting_vnpay_response: 'info'
+    };
+    return severityMap[status] || 'secondary';
+}
+
 // LOAD ORDER DETAIL
 async function loadOrderDetail() {
     try {
@@ -48,7 +106,7 @@ const formatNumber = (n) => Number(n).toLocaleString('vi-VN');
 const updateStatus = async (newStatus, event) => {
     confirm.require({
         target: event.currentTarget,
-        message: `Chuyển trạng thái sang "${newStatus}"?`,
+        message: `Chuyển trạng thái sang "${getOrderStatusLabel(newStatus)}"?`,
         icon: 'pi pi-exclamation-triangle',
         rejectProps: {
             label: 'Huỷ',
@@ -97,25 +155,16 @@ const updateStatus = async (newStatus, event) => {
             <template #title>Trạng thái đơn hàng</template>
             <template #content>
                 <div class="flex items-center gap-4">
-                    <Tag
-                        :value="order.order_status"
-                        :severity="
-                            order.order_status === 'pending'
-                                ? 'warning'
-                                : order.order_status === 'confirmed'
-                                  ? 'info'
-                                  : order.order_status === 'processing'
-                                    ? 'help'
-                                    : order.order_status === 'shipping'
-                                      ? 'primary'
-                                      : order.order_status === 'completed'
-                                        ? 'success'
-                                        : 'danger'
-                        "
-                        class="capitalize"
-                    />
+                    <Tag :value="getOrderStatusLabel(order.order_status)" :severity="getOrderStatusSeverity(order.order_status)" />
 
-                    <Dropdown :options="orderStatuses" v-model="order.order_status" class="capitalize w-56" @change="(e) => updateStatus(order.order_status, e)" />
+                    <Dropdown :options="orderStatuses" v-model="order.order_status" class="capitalize w-56" @change="(e) => updateStatus(order.order_status, e)">
+                        <template #value="{ value }">
+                            <span>{{ getOrderStatusLabel(value) }}</span>
+                        </template>
+                        <template #option="{ option }">
+                            {{ getOrderStatusLabel(option) }}
+                        </template>
+                    </Dropdown>
                 </div>
             </template>
         </Card>
@@ -143,7 +192,10 @@ const updateStatus = async (newStatus, event) => {
                         {{ new Date(order.order_date).toLocaleDateString('vi-VN') }}
                     </div>
                     <div><strong>Ghi chú:</strong> {{ order.note || 'Không có' }}</div>
-                    <div><strong>Thanh toán:</strong> {{ order.payment_status }}</div>
+                    <div>
+                        <strong>Thanh toán:</strong>
+                        <Tag :value="getPaymentStatusLabel(order.payment_status)" :severity="getPaymentStatusSeverity(order.payment_status)" class="ml-2" />
+                    </div>
                     <div><strong>Voucher:</strong> {{ order.voucher_id ?? 'Không sử dụng' }}</div>
                 </div>
             </template>
