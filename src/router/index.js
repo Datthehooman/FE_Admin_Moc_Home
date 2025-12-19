@@ -131,6 +131,11 @@ const router = createRouter({
                     component: () => import('@/views/Article_Category/Edit_Article_Category.vue')
                 },
                 {
+                    path: 'Review/List_Review',
+                    name: 'List_Review',
+                    component: () => import('@/views/Review/List_Review.vue')
+                },
+                {
                     path: '/uikit/formlayout',
                     name: 'formlayout',
                     component: () => import('@/views/uikit/FormLayout.vue')

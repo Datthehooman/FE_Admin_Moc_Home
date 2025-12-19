@@ -56,7 +56,7 @@ const loadCategories = async () => {
         });
         categories.value = res.data.result.data.map((c) => ({
             id: c.id,
-            name: c.category_name
+            name: c.name
         }));
     } catch (err) {
         console.error('Lỗi tải danh mục:', err);
