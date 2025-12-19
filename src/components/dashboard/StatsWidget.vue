@@ -15,12 +15,6 @@ const revenueGrowth = ref(0);
 const customers = ref(0);
 const successRate = ref(0);
 
-// ---- MINI CHART ----
-const miniOrdersChart = ref(null);      // line góc cạnh
-const miniRevenueChart = ref(null);     // line cong mềm
-const miniCustomersChart = ref(null);   // line điểm tròn
-const miniSuccessChart = ref(null);     // bar chart
-
 const newOrders = ref(0);
 const newCustomers = ref(0);
 const responded = ref(0);
@@ -60,12 +54,6 @@ async function fetchSummary() {
     responded.value = d.order_status_rate.success_count;
     newOrders.value = orders.value;
 
-    const labels = generateDates(result.meta.period.from, result.meta.period.to);
-
-    createMiniOrdersChart(labels, orders.value);
-    createMiniRevenueChart(labels, revenue.value);
-    createMiniSuccessChart(labels, successRate.value);
-
   } catch (err) {
     console.error("Summary Error:", err);
   }
@@ -82,48 +70,11 @@ async function fetchCustomerRegion() {
     customers.value = result.data.summary.total_customers ?? 0;
     newCustomers.value = customers.value;
 
-    const labels = generateDates(result.data.period.from, result.data.period.to);
-    createMiniCustomersChart(labels, customers.value);
-
   } catch (err) {
     console.error("Customer Region Error:", err);
   }
 }
-
-// ---- CREATE MINI CHARTS ----
-function createMiniOrdersChart(labels, value) {
-  const data = labels.map((_, i) => i === labels.length - 1 ? value : Math.floor(value * Math.random()*0.5 + value*0.5)); // tạm thời random các ngày cũ
-  miniOrdersChart.value = {
-    labels,
-    datasets: [{ data, borderColor:"#1E90FF", backgroundColor:"rgba(30,144,255,0.2)", tension:0, fill:true, pointRadius:0 }]
-  };
-}
-
-function createMiniRevenueChart(labels, value) {
-  const data = labels.map((_, i) => i === labels.length - 1 ? value : Math.floor(value * Math.random()*0.5 + value*0.5));
-  miniRevenueChart.value = {
-    labels,
-    datasets: [{ data, borderColor:"#FF8C00", backgroundColor:"rgba(255,140,0,0.2)", tension:0.4, fill:true, pointRadius:0 }]
-  };
-}
-
-function createMiniCustomersChart(labels, value) {
-  const data = labels.map((_, i) => i === labels.length - 1 ? value : Math.floor(value * Math.random()*0.5 + value*0.5));
-  miniCustomersChart.value = {
-    labels,
-    datasets: [{ data, borderColor:"#00CED1", backgroundColor:"rgba(0,206,209,0.2)", tension:0.4, fill:true, pointRadius:5 }]
-  };
-}
-
-function createMiniSuccessChart(labels, value) {
-  const data = labels.map((_, i) => i === labels.length - 1 ? value : Math.floor(value * Math.random()*0.5 + value*0.5));
-  miniSuccessChart.value = {
-    labels,
-    datasets: [{ data, backgroundColor:"#8A2BE2" }]
-  };
-}
 </script>
-
 
 <template>
   <!-- CARD 1 - Orders -->
@@ -140,11 +91,11 @@ function createMiniSuccessChart(labels, value) {
       </div>
       <span class="text-primary font-medium">{{ newOrders }}</span>
       <span class="text-muted-color"> Đơn mới so với tháng trước</span>
-      <div class="mt-2 h-12">
-        <Chart v-if="miniOrdersChart" type="line" :data="miniOrdersChart"
+      <!-- <div class="mt-2 h-12"> -->
+        <!-- <Chart v-if="miniOrdersChart" type="line" :data="miniOrdersChart"
           :options="{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{x:{display:false},y:{display:false}}}"
-          class="w-full h-12"/>
-      </div>
+          class="w-full h-12"/> -->
+      <!-- </div> -->
     </div>
   </div>
 
@@ -162,11 +113,11 @@ function createMiniSuccessChart(labels, value) {
       </div>
       <span class="text-primary font-medium">%{{ revenueGrowth }}</span>
       <span class="text-muted-color"> so với tháng trước</span>
-      <div class="mt-2 h-12">
-        <Chart v-if="miniRevenueChart" type="line" :data="miniRevenueChart"
+      <!-- <div class="mt-2 h-12"> -->
+        <!-- <Chart v-if="miniRevenueChart" type="line" :data="miniRevenueChart"
           :options="{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{x:{display:false},y:{display:false}}}"
-          class="w-full h-12"/>
-      </div>
+          class="w-full h-12"/> -->
+      <!-- </div> -->
     </div>
   </div>
 
@@ -184,11 +135,11 @@ function createMiniSuccessChart(labels, value) {
       </div>
       <span class="text-primary font-medium">{{ newCustomers }}</span>
       <span class="text-muted-color">Khách mới</span>
-      <div class="mt-2 h-12">
-        <Chart v-if="miniCustomersChart" type="line" :data="miniCustomersChart"
+      <!-- <div class="mt-2 h-12"> -->
+        <!-- <Chart v-if="miniCustomersChart" type="line" :data="miniCustomersChart"
           :options="{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{x:{display:false},y:{display:false}}}"
-          class="w-full h-12"/>
-      </div>
+          class="w-full h-12"/> -->
+      <!-- </div> -->
     </div>
   </div>
 
@@ -206,11 +157,11 @@ function createMiniSuccessChart(labels, value) {
       </div>
       <span class="text-primary font-medium">{{ responded }}</span>
       <span class="text-muted-color">Đơn xử lý</span>
-      <div class="mt-2 h-12">
-        <Chart v-if="miniSuccessChart" type="bar" :data="miniSuccessChart"
+      <!-- <div class="mt-2 h-12"> -->
+        <!-- <Chart v-if="miniSuccessChart" type="bar" :data="miniSuccessChart"
           :options="{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{x:{display:false},y:{display:false}}}"
-          class="w-full h-12"/>
-      </div>
+          class="w-full h-12"/> -->
+      <!-- </div> -->
     </div>
   </div>
 </template>
