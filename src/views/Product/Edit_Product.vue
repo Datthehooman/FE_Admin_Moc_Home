@@ -35,7 +35,7 @@ const productForm = reactive({
   badge: "",
   quantity: "",
   slug: "",
-  status: "",
+  status: "Hiện",
   images: [] // ảnh[0] = ảnh chính, images[1..] = gallery
 });
 
@@ -94,7 +94,9 @@ const loadProduct = async () => {
       badge: p.badge ?? "",
       slug: p.slug ?? "",
       quantity: p.quantity ?? "",
-      status: p.status == 1 ? "Hiện" : "Ẩn"
+        status: typeof p.status !== "undefined"
+        ? (p.status === 1 ? "Hiện" : "Ẩn")
+        : productForm.status
     });
 
     // Load images (giữ nguyên cấu trúc)
@@ -371,8 +373,12 @@ const mainImage = computed(() => {
 // INIT
 onMounted(() => {
   loadCategories();
-  loadProduct();
+
+  if (productId) {
+    loadProduct(); // ✅ CHỈ LOAD KHI EDIT
+  }
 });
+
 </script>
 
 <template>

@@ -44,32 +44,39 @@ async function fetchSummary() {
 // 🎯 BUILD BAR CHART NEON
 // ==========================
 function buildChart() {
-  const ctx = document.createElement("canvas").getContext("2d");
+//   const ctx = document.createElement("canvas").getContext("2d");
 
-  // 🌊 Gradient xanh dương — Doanh thu gộp
-  const gradientBlue = ctx.createLinearGradient(0, 0, 0, 300);
-  gradientBlue.addColorStop(0, "rgba(0,128,255,0.9)");
-  gradientBlue.addColorStop(1, "rgba(0,128,255,0.3)");
+//   // 🌊 Gradient xanh dương — Doanh thu gộp
+//   const gradientBlue = ctx.createLinearGradient(0, 0, 0, 300);
+//   gradientBlue.addColorStop(0, "rgba(0,128,255,0.9)");
+//   gradientBlue.addColorStop(1, "rgba(0,128,255,0.3)");
 
-  // 🔥 Gradient cam — Doanh thu thuần
-  const gradientOrange = ctx.createLinearGradient(0, 0, 0, 300);
-  gradientOrange.addColorStop(0, "rgba(255,140,0,0.9)");
-  gradientOrange.addColorStop(1, "rgba(255,140,0,0.3)");
+//   // 🔥 Gradient cam — Doanh thu thuần
+//   const gradientOrange = ctx.createLinearGradient(0, 0, 0, 300);
+//   gradientOrange.addColorStop(0, "rgba(255,140,0,0.9)");
+//   gradientOrange.addColorStop(1, "rgba(255,140,0,0.3)");
 
   chartData.value = {
     labels: labels.value,
     datasets: [
-      {
-        label: "Doanh thu",
-        data: values.value,
-        backgroundColor: [gradientBlue, gradientOrange],
-        borderRadius: 12,
-        barThickness: 50,
-        hoverBackgroundColor: ["rgba(0,128,255,1)", "rgba(255,140,0,1)"],
-        borderSkipped: false,
-        barPercentage: 0.6
-      }
-    ]
+  {
+    label: "Doanh thu",
+    data: values.value,
+    backgroundColor: [
+      "#1e88e5", // xanh dương
+      "#fb8c00"  // cam
+    ],
+    hoverBackgroundColor: [
+      "#1565c0",
+      "#ef6c00"
+    ],
+    barThickness: 50,
+    barPercentage: 0.6,
+    borderRadius: 0,
+    borderSkipped: false
+  }
+]
+
   };
 
   chartOptions.value = {

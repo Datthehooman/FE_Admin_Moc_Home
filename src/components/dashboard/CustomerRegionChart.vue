@@ -66,27 +66,28 @@ function buildChart() {
     gradientPink.addColorStop(0, "rgba(255,20,147,0.9)");
     gradientPink.addColorStop(1, "rgba(255,20,147,0.3)");
 
-    chartData.value = {
-        labels: labels.value,
-        datasets: [
-            {
-                label: "Số khách hàng",
-                data: customers.value,
-                backgroundColor: [
-                    gradientBlue,   // Miền Bắc neon
-                    gradientGreen,  // Miền Trung neon
-                    gradientPink    // Miền Nam neon
-                ],
-                borderRadius: 12,
-                barThickness: 40,
-                hoverBackgroundColor: [
-                    "rgba(0,128,255,1)",
-                    "rgba(0,255,127,1)",
-                    "rgba(255,20,147,1)"
-                ]
-            }
-        ]
-    };
+   chartData.value = {
+    labels: labels.value,
+    datasets: [
+        {
+            label: "Số khách hàng",
+            data: customers.value,
+            backgroundColor: [
+                "#1e88e5", // Miền Bắc – xanh dương
+                "#43a047", // Miền Trung – xanh lá
+                "#e91e63"  // Miền Nam – hồng
+            ],
+            hoverBackgroundColor: [
+                "#1565c0",
+                "#2e7d32",
+                "#c2185b"
+            ],
+            borderRadius: 0,   // 👈 bỏ bo góc
+            barThickness: 40
+        }
+    ]
+};
+
 
     chartOptions.value = {
         maintainAspectRatio: false,

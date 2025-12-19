@@ -42,16 +42,16 @@ async function fetchRevenuePeriod() {
 
 // ----------------- BUILD CHART -----------------
 function buildChart() {
-    const ctx = document.createElement("canvas").getContext("2d");
+    // const ctx = document.createElement("canvas").getContext("2d");
 
-    // gradient neon cho bar
-    const gradientGross = ctx.createLinearGradient(0,0,0,300);
-    gradientGross.addColorStop(0, "rgba(0, 206, 209, 0.8)");
-    gradientGross.addColorStop(1, "rgba(0, 206, 209, 0.3)");
+    // // gradient neon cho bar
+    // const gradientGross = ctx.createLinearGradient(0,0,0,300);
+    // gradientGross.addColorStop(0, "rgba(0, 206, 209, 0.8)");
+    // gradientGross.addColorStop(1, "rgba(0, 206, 209, 0.3)");
 
-    const gradientNet = ctx.createLinearGradient(0,0,0,300);
-    gradientNet.addColorStop(0, "rgba(255,0,0,0.8)"); // đổi màu tím -> đỏ neon
-    gradientNet.addColorStop(1, "rgba(255,0,0,0.3)");
+    // const gradientNet = ctx.createLinearGradient(0,0,0,300);
+    // gradientNet.addColorStop(0, "rgba(255,0,0,0.8)"); // đổi màu tím -> đỏ neon
+    // gradientNet.addColorStop(1, "rgba(255,0,0,0.3)");
 
     // Tính % tăng trưởng so với ngày trước đó
     const growthGross = gross.value.map((v,i) => i === 0 ? 0 : ((v - gross.value[i-1]) / gross.value[i-1]) * 100);
@@ -60,57 +60,54 @@ function buildChart() {
     chartData.value = {
         labels: labels.value,
         datasets: [
-            {
-                type: "bar",
-                label: "Doanh thu gộp",
-                data: gross.value,
-                backgroundColor: gradientGross,
-                borderRadius: 12,
-                barThickness: 28,
-                hoverBackgroundColor: "rgba(0, 206, 209, 1)"
-            },
-            {
-                type: "bar",
-                label: "Doanh thu thuần",
-                data: net.value,
-                backgroundColor: gradientNet,
-                borderRadius: 12,
-                barThickness: 28,
-                hoverBackgroundColor: "rgba(255,0,0,1)"
-            },
-            {
-                type: "line",
-                label: "Tăng trưởng Gộp %",
-                data: growthGross,
-                borderColor: "#7CFC00",
-                backgroundColor: "rgba(124,252,0,0.2)",
-                fill: true,
-                tension: 0.4,
-                pointRadius: 6,
-                pointHoverRadius: 8,
-                pointBackgroundColor: "#7CFC00",
-                pointBorderColor: "#fff",
-                pointHoverBorderColor: "#7CFC00",
-                cubicInterpolationMode: "monotone",
-                yAxisID: "y1"
-            },
-            {
-                type: "line",
-                label: "Tăng trưởng Thuần %",
-                data: growthNet,
-                borderColor: "#FFD700",
-                backgroundColor: "rgba(255,215,0,0.2)",
-                fill: true,
-                tension: 0.4,
-                pointRadius: 6,
-                pointHoverRadius: 8,
-                pointBackgroundColor: "#FFD700",
-                pointBorderColor: "#fff",
-                pointHoverBorderColor: "#FFD700",
-                cubicInterpolationMode: "monotone",
-                yAxisID: "y1"
-            }
-        ]
+    {
+        type: "bar",
+        label: "Doanh thu gộp",
+        data: gross.value,
+        backgroundColor: "#00CED1", // xanh ngọc phẳng
+        hoverBackgroundColor: "#00bfc2",
+        borderRadius: 0,
+        barThickness: 28
+    },
+    {
+        type: "bar",
+        label: "Doanh thu thuần",
+        data: net.value,
+        backgroundColor: "#ff3b3b", // đỏ phẳng
+        hoverBackgroundColor: "#e63232",
+        borderRadius: 0,
+        barThickness: 28
+    },
+    {
+        type: "line",
+        label: "Tăng trưởng Gộp %",
+        data: growthGross,
+        borderColor: "#7CFC00",
+        backgroundColor: "rgba(124,252,0,0.2)",
+        fill: true,
+        tension: 0.4,
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        pointBackgroundColor: "#7CFC00",
+        pointBorderColor: "#fff",
+        yAxisID: "y1"
+    },
+    {
+        type: "line",
+        label: "Tăng trưởng Thuần %",
+        data: growthNet,
+        borderColor: "#FFD700",
+        backgroundColor: "rgba(255,215,0,0.2)",
+        fill: true,
+        tension: 0.4,
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        pointBackgroundColor: "#FFD700",
+        pointBorderColor: "#fff",
+        yAxisID: "y1"
+    }
+]
+
     };
 
     chartOptions.value = {
