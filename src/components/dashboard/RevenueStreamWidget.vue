@@ -5,20 +5,14 @@ import { useAuthStore } from "@/stores/auth";
 import { useLayout } from "@/layout/composables/layout";
 
 const authStore = useAuthStore();
-const { getPrimary, getSurface, isDarkTheme } = useLayout();
+const { isDarkTheme } = useLayout();
+
 const chartData = ref(null);
 const chartOptions = ref(null);
-const loading = ref(true);
 
-// ==========================
-// 🎯 BỘ LỌC
-// ==========================
 const fromDate = ref("");
-const toDate   = ref("");
+const toDate = ref("");
 
-// ==========================
-// 🎯 DỮ LIỆU
-// ==========================
 const labels = ref(["Doanh thu gộp", "Doanh thu thuần"]);
 const values = ref([]);
 
@@ -47,16 +41,20 @@ async function fetchSummary() {
 }
 
 // ==========================
-// 🎯 BUILD HẦM HỐ LINE CHART
+// 🎯 BUILD BAR CHART NEON
 // ==========================
 function buildChart() {
-  const style = getComputedStyle(document.documentElement);
-
-  // Gradient cho line
   const ctx = document.createElement("canvas").getContext("2d");
-  const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-  gradient.addColorStop(0, "rgba(30,144,255,0.5)");
-  gradient.addColorStop(1, "rgba(30,144,255,0)");
+
+  // 🌊 Gradient xanh dương — Doanh thu gộp
+  const gradientBlue = ctx.createLinearGradient(0, 0, 0, 300);
+  gradientBlue.addColorStop(0, "rgba(0,128,255,0.9)");
+  gradientBlue.addColorStop(1, "rgba(0,128,255,0.3)");
+
+  // 🔥 Gradient cam — Doanh thu thuần
+  const gradientOrange = ctx.createLinearGradient(0, 0, 0, 300);
+  gradientOrange.addColorStop(0, "rgba(255,140,0,0.9)");
+  gradientOrange.addColorStop(1, "rgba(255,140,0,0.3)");
 
   chartData.value = {
     labels: labels.value,
@@ -64,97 +62,70 @@ function buildChart() {
       {
         label: "Doanh thu",
         data: values.value,
-        borderColor: "#1E90FF",
-        backgroundColor: gradient,
-        tension: 0.6,           // đường uốn mềm
-        fill: true,
-        pointRadius: 10,        // điểm nổi bật
-        pointHoverRadius: 14,   // hover lớn
-        pointBackgroundColor: "#1E90FF",
-        pointBorderColor: "#fff",
-        pointHoverBackgroundColor: "#fff",
-        pointHoverBorderColor: "#1E90FF",
-        borderWidth: 3,
-        cubicInterpolationMode: 'monotone', // smooth
-        shadowOffsetX: 2,
-        shadowOffsetY: 2,
-        shadowBlur: 8,
-        shadowColor: "rgba(0,0,0,0.2)"
+        backgroundColor: [gradientBlue, gradientOrange],
+        borderRadius: 12,
+        barThickness: 50,
+        hoverBackgroundColor: ["rgba(0,128,255,1)", "rgba(255,140,0,1)"],
+        borderSkipped: false,
+        barPercentage: 0.6
       }
     ]
   };
 
   chartOptions.value = {
-    responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 1500, easing: "easeOutQuart" },
+    responsive: true,
     plugins: {
       tooltip: {
         callbacks: {
-          label: function (context) {
-            return context.dataset.label + ": " + context.parsed.y.toLocaleString("vi-VN") + " ₫";
-          }
+          label: (context) =>
+            context.dataset.label + ": " + context.parsed.y.toLocaleString("vi-VN") + " ₫"
         }
       },
-      legend: {
-        labels: { color: style.getPropertyValue("--text-color-secondary") }
-      }
+      legend: { display: false }
     },
     scales: {
       x: {
-        ticks: { color: style.getPropertyValue("--text-color-secondary"), font:{weight:'500'} },
+        ticks: { color: isDarkTheme.value ? "#fff" : "#333", font: { weight: "600" } },
         grid: { display: false }
       },
       y: {
-        ticks: { color: style.getPropertyValue("--text-color-secondary") },
-        grid: { color: style.getPropertyValue("--surface-border") },
+        ticks: { color: isDarkTheme.value ? "#fff" : "#333" },
+        grid: { color: isDarkTheme.value ? "rgba(255,255,255,0.1)" : "#eee" },
         beginAtZero: true
       }
-    }
+    },
+    animation: { duration: 1500, easing: "easeOutQuart" }
   };
 }
 
-// ==========================
-// 🎯 WATCH THEME
-// ==========================
-watch([getPrimary, getSurface, isDarkTheme], () => buildChart());
-
-// ==========================
-// 🎯 AUTO LOAD
-// ==========================
+watch([isDarkTheme], () => buildChart());
 onMounted(() => fetchSummary());
-
-// ==========================
-// 🎯 APPLY FILTER
-// ==========================
-function applyFilter() {
-  fetchSummary();
-}
+function applyFilter() { fetchSummary(); }
 </script>
 
 <template>
-<!-- Giao diend nguoi dung cho widget doanh thu tren dashboard -->
-  <div class="card pb-4">
-    <div class="font-semibold text-xl mb-4">Doanh thu tổng hợp</div>
+<div class="card pb-4">
+  <div class="font-semibold text-xl mb-4">Doanh thu tổng hợp</div>
 
-    <!-- BỘ LỌC -->
-    <div class="p-3 bg-gray-50 rounded-lg mb-4">
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
-        <div class="md:col-span-2">
-          <label class="text-sm font-medium block mb-1">Từ ngày</label>
-          <input type="date" v-model="fromDate" class="w-full p-inputtext" />
-        </div>
-        <div class="md:col-span-2">
-          <label class="text-sm font-medium block mb-1">Đến ngày</label>
-          <input type="date" v-model="toDate" class="w-full p-inputtext" />
-        </div>
-        <div class="flex justify-start md:justify-end">
-          <Button icon="pi pi-filter" class="p-button-rounded p-button-outlined" @click="applyFilter" />
-        </div>
+  <!-- BỘ LỌC -->
+  <div class="p-3 bg-gray-50 rounded-lg mb-4">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+      <div class="md:col-span-2">
+        <label class="text-sm font-medium block mb-1">Từ ngày</label>
+        <input type="date" v-model="fromDate" class="w-full p-inputtext" />
+      </div>
+      <div class="md:col-span-2">
+        <label class="text-sm font-medium block mb-1">Đến ngày</label>
+        <input type="date" v-model="toDate" class="w-full p-inputtext" />
+      </div>
+      <div class="flex justify-start md:justify-end">
+        <Button icon="pi pi-filter" class="p-button-rounded p-button-outlined" @click="applyFilter" />
       </div>
     </div>
-
-    <!-- BIỂU ĐỒ LINE HẦM HỐ -->
-    <Chart type="line" :data="chartData" :options="chartOptions" class="h-80" />
   </div>
+
+  <!-- BIỂU ĐỒ CỘT NEON -->
+  <Chart type="bar" :data="chartData" :options="chartOptions" class="h-80" />
+</div>
 </template>
