@@ -31,11 +31,11 @@ const router = createRouter({
                     meta: { requiresAuth: true }
                 },
                 {
-        path: '/Product/Detail/:id', // route chi tiết sản phẩm
-        name: 'ProductDetail',
-        component: () => import('@/views/Product/ProductDetail.vue')
-    },
-      {
+                    path: '/Product/Detail/:id', // route chi tiết sản phẩm
+                    name: 'ProductDetail',
+                    component: () => import('@/views/Product/ProductDetail.vue')
+                },
+                {
                     path: 'Chat/Chats',
                     name: 'Chats',
                     component: () => import('@/views/Chat/Chats.vue')
@@ -139,6 +139,37 @@ const router = createRouter({
                     path: 'Review/List_Review',
                     name: 'List_Review',
                     component: () => import('@/views/Review/List_Review.vue')
+                },
+                // Inventory routes
+                {
+                    path: 'Inventory/Report',
+                    name: 'Inventory_Report',
+                    component: () => import('@/views/Inventory/Inventory_Report.vue')
+                },
+                {
+                    path: 'Inventory/Low_Stock_Alert',
+                    name: 'Low_Stock_Alert',
+                    component: () => import('@/views/Inventory/Low_Stock_Alert.vue')
+                },
+                {
+                    path: 'Inventory/History',
+                    name: 'Inventory_History',
+                    component: () => import('@/views/Inventory/Inventory_History.vue')
+                },
+                {
+                    path: 'Inventory/Import',
+                    name: 'Inventory_Import',
+                    component: () => import('@/views/Inventory/Inventory_Import.vue')
+                },
+                {
+                    path: 'Inventory/Export',
+                    name: 'Inventory_Export',
+                    component: () => import('@/views/Inventory/Inventory_Export.vue')
+                },
+                {
+                    path: 'Inventory/Adjust',
+                    name: 'Inventory_Adjust',
+                    component: () => import('@/views/Inventory/Inventory_Adjust.vue')
                 },
                 {
                     path: '/uikit/formlayout',

@@ -120,6 +120,58 @@ const model = ref([
         items: [{ label: 'Đánh Giá', icon: 'pi pi-fw pi-star', to: '/Review/List_Review' }]
     },
     {
+        items: [
+            {
+                label: 'Kho',
+                icon: 'pi pi-fw pi-warehouse',
+                items: [
+                    {
+                        label: 'Báo cáo & lịch sử kho',
+                        icon: 'pi pi-fw pi-book',
+                        items: [
+                            {
+                                label: 'Báo cáo kho',
+                                icon: 'pi pi-fw pi-list',
+                                to: '/Inventory/Report'
+                            },
+                            {
+                                label: 'Tồn kho thấp',
+                                icon: 'pi pi-fw pi-exclamation-triangle',
+                                to: '/Inventory/Low_Stock_Alert'
+                            },
+                            {
+                                label: 'Lịch sử kho',
+                                icon: 'pi pi-fw pi-history',
+                                to: '/Inventory/History'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Xuất/nhập kho',
+                        icon: 'pi pi-fw pi-arrow-right-arrow-left',
+                        items: [
+                            {
+                                label: 'Nhập kho',
+                                icon: 'pi pi-fw pi-file-import',
+                                to: '/Inventory/Import'
+                            },
+                            {
+                                label: 'Xuất kho',
+                                icon: 'pi pi-fw pi-file-export',
+                                to: '/Inventory/Export'
+                            },
+                            {
+                                label: 'Điều chỉnh kho',
+                                icon: 'pi pi-fw pi-file-edit',
+                                to: '/Inventory/Adjust'
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
         items: [{ label: 'Khuyến Mãi', icon: 'pi pi-fw pi-gift', to: '/Promotions/List' }]
     },
     {
@@ -130,7 +182,6 @@ const model = ref([
     }
 ]);
 </script>
-
 
 <template>
     <ul class="layout-menu">
