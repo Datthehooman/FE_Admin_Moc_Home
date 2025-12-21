@@ -1,8 +1,8 @@
 <template>
-  <div class="card flex-1 flex gap-6 min-h-screen">
+  <div class="card flex h-screen gap-6">
 
     <!-- DANH SÁCH CONVERSATION -->
-    <aside class="w-[30%] border-r border-gray-200 p-4">
+    <aside class="w-[30%] border-r border-gray-200 p-4 flex-shrink-0 flex flex-col h-full">
       <h2 class="font-semibold text-xl mb-4">Người dùng</h2>
 
       <InputText
@@ -12,7 +12,7 @@
         @input="searchConversation"
       />
 
-      <div class="space-y-2 max-h-[600px] overflow-y-auto custom-scroll">
+      <div class="flex-1 min-h-0 overflow-y-auto custom-scroll space-y-2">
         <div
           v-for="conv in conversations"
           :key="conv.id"
@@ -23,8 +23,8 @@
           <div class="w-10 h-10 rounded-full bg-[#6E4E37] text-white flex items-center justify-center font-bold">
             {{ conv.user.full_name[0] }}
           </div>
-          <div class="flex-1 flex flex-col">
-            <span class="font-medium">{{ conv.user.full_name }}</span>
+          <div class="flex-1 flex flex-col min-w-0">
+            <span class="font-medium truncate">{{ conv.user.full_name }}</span>
             <span class="text-xs text-gray-500 truncate">
               {{ conv.last_message?.message || 'Chưa có tin nhắn' }}
             </span>
@@ -35,11 +35,11 @@
     </aside>
 
     <!-- CHAT BOX -->
-    <main class="flex-1 flex flex-col p-4">
-      <div v-if="selectedConversation" class="flex-1 flex flex-col border rounded-xl shadow overflow-hidden">
+    <main class="flex-1 flex flex-col p-4 min-w-0 h-full">
+      <div v-if="selectedConversation" class="flex-1 flex flex-col border rounded-xl shadow overflow-hidden min-w-0">
 
         <!-- HEADER -->
-        <div class="flex items-center justify-between p-3 border-b bg-gray-50">
+        <div class="flex items-center justify-between p-3 border-b bg-gray-50 flex-shrink-0">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-[#6E4E37] text-white flex items-center justify-center font-bold">
               {{ selectedConversation.user.full_name[0] }}
@@ -49,14 +49,11 @@
         </div>
 
         <!-- MESSAGES -->
-        <div
-          ref="messagesContainer"
-          class="flex-1 overflow-y-auto p-4 space-y-4 custom-scroll max-h-[500px]"
-        >
+        <div ref="messagesContainer" class="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 custom-scroll flex flex-col">
           <div
             v-for="msg in messages"
             :key="msg.id"
-            class="flex items-end gap-2"
+            class="flex min-w-0 gap-2 items-end w-full"
             :class="msg.is_admin_sender ? 'justify-end' : 'justify-start'"
           >
             <div
@@ -67,33 +64,33 @@
             </div>
 
             <div
-              class="max-w-[70%] px-4 py-2 rounded-2xl text-sm leading-relaxed break-words flex flex-col gap-1"
+              class="bubble-safe flex flex-col gap-1 min-w-0"
               :class="msg.is_admin_sender ? 'bg-[#DCF8C6]' : 'bg-[#F1F1F1]'"
             >
               <p v-if="msg.message">{{ msg.message }}</p>
 
-              <!-- Hiển thị nhiều ảnh -->
-              <div v-if="msg.image_url && msg.image_url.length" class="flex flex-wrap gap-2 mt-1">
+              <!-- HIỂN THỊ NHIỀU ẢNH -->
+              <div v-if="getMessageImages(msg).length" class="flex flex-wrap gap-2 mt-1">
                 <img
-                  v-for="(img, idx) in msg.image_url"
+                  v-for="(img, idx) in getMessageImages(msg)"
                   :key="idx"
                   :src="img"
-                  class="w-[100px] h-[100px] object-cover rounded-lg"
+                  class="max-w-[150px] max-h-[150px] object-cover rounded-lg cursor-pointer"
                 />
               </div>
 
               <span class="text-[10px] text-gray-400 self-end">
-                {{ new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}
+                {{ formatTime(msg.created_at) }}
               </span>
             </div>
           </div>
         </div>
 
         <!-- INPUT -->
-        <div class="p-3 border-t bg-gray-50">
+        <div class="p-3 border-t bg-gray-50 flex-shrink-0 min-w-0">
           <div class="flex flex-col gap-2">
 
-            <!-- PREVIEW NHIỀU ẢNH -->
+            <!-- PREVIEW IMAGE -->
             <div v-if="previewImages.length" class="flex flex-wrap gap-2 mb-2">
               <div v-for="(img, i) in previewImages" :key="i" class="relative">
                 <img :src="img" class="w-[72px] h-[72px] object-cover rounded-lg border" />
@@ -106,34 +103,23 @@
               </div>
             </div>
 
-            <!-- ROW INPUT -->
-            <div class="flex items-center gap-2 bg-[#F0F2F5] rounded-2xl px-3 py-2">
-              <!-- IMAGE SELECT -->
+            <div class="flex items-center gap-2 bg-[#F0F2F5] rounded-2xl px-3 py-2 min-w-0">
               <label class="cursor-pointer flex items-center justify-center h-10 w-10 shrink-0">
                 <i class="pi pi-fw pi-image text-gray-500 hover:text-gray-700 text-lg"></i>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  class="hidden"
-                  @change="handleSelectImages"
-                />
+                <input type="file" accept="image/*" multiple class="hidden" @change="handleSelectImages" />
               </label>
 
-              <!-- TEXTAREA -->
               <textarea
                 ref="textareaRef"
                 v-model="newMessage"
                 rows="1"
-                wrap="hard"
                 placeholder="Nhập tin nhắn..."
-                class="flex-1 bg-transparent resize-none outline-none text-sm leading-5 py-2 max-h-[100px] overflow-y-auto break-words custom-scroll"
+                class="flex-1 min-w-0 bg-transparent resize-none outline-none text-sm leading-5 py-2 max-h-[100px] overflow-y-auto break-words custom-scroll"
                 @input="handleInput"
                 @keydown.enter.exact.prevent="sendMessage"
                 @keydown.enter.shift.exact.stop
               ></textarea>
 
-              <!-- SEND -->
               <button
                 @click="sendMessage"
                 :disabled="!newMessage.trim() && !selectedImages.length"
@@ -146,7 +132,7 @@
         </div>
       </div>
 
-      <div v-else class="flex-1 flex items-center justify-center text-gray-400">
+      <div v-else class="flex-1 flex items-center justify-center text-gray-400 min-w-0">
         Chọn một người dùng để bắt đầu chat
       </div>
     </main>
@@ -154,26 +140,51 @@
 </template>
 
 <script setup lang="ts">
-
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import apiClient from '@/api/axios';
 import { useAuthStore } from '@/stores/auth';
 
 const authStore = useAuthStore();
-
-const conversations = ref([]);
-const selectedConversation = ref(null);
-const messages = ref([]);
+const conversations = ref<any[]>([]);
+const selectedConversation = ref<any>(null);
+const messages = ref<any[]>([]);
 const newMessage = ref('');
 const selectedImages = ref<File[]>([]);
 const previewImages = ref<string[]>([]);
-const textareaRef = ref(null);
-const messagesContainer = ref(null);
+const textareaRef = ref<HTMLTextAreaElement | null>(null);
+const messagesContainer = ref<HTMLDivElement | null>(null);
 const searchKeyword = ref('');
-
 const MAX_HEIGHT = 100;
+let pollingInterval: any = null;
 
-// LOAD CONVERSATIONS
+// Hàm chuẩn hóa image_url thành mảng
+function getMessageImages(msg: any) {
+  if (!msg.image_url) return [];
+  if (typeof msg.image_url === 'string') {
+    try {
+      const parsed = JSON.parse(msg.image_url);
+      return Array.isArray(parsed) ? parsed : [msg.image_url];
+    } catch {
+      return [msg.image_url];
+    }
+  }
+  return Array.isArray(msg.image_url) ? msg.image_url : [msg.image_url];
+}
+
+function formatTime(dateStr: string) {
+  if (!dateStr) return '';
+  const cleaned = dateStr.replace(/\.\d{6}/, '');
+  return new Date(cleaned).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// Auto scroll
+watch(messages, async () => {
+  await nextTick();
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+  }
+});
+
 async function loadConversations() {
   try {
     const res = await apiClient.get('/conversation', {
@@ -186,78 +197,123 @@ async function loadConversations() {
   }
 }
 
-// SELECT CONVERSATION
-async function selectConversation(conv) {
+async function selectConversation(conv: any) {
   selectedConversation.value = conv;
   await loadMessages(conv.id);
+
+  // scroll xuống cuối
+  await nextTick();
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+  }
 }
 
-// LOAD MESSAGES
-async function loadMessages(convId) {
+
+async function loadMessages(convId: number) {
   try {
-    const res = await apiClient.get(`/conversation/${convId}/message`, {
+    messages.value = [];
+    const resFirst = await apiClient.get(`/conversation/${convId}/message?page=1`, {
       headers: { Authorization: `Bearer ${authStore.token}` }
     });
-    messages.value = res.data.result.data || [];
-    nextTick(() => scrollToBottom());
+
+    const firstPageData = resFirst.data.result.data.messages;
+    const normalizeMessages = firstPageData.data.map((msg: any) => parseMessage(msg));
+    messages.value.push(...normalizeMessages);
+
+    for (let page = 2; page <= firstPageData.last_page; page++) {
+      const res = await apiClient.get(`/conversation/${convId}/message?page=${page}`, {
+        headers: { Authorization: `Bearer ${authStore.token}` }
+      });
+      const msgs = res.data.result.data.messages.data.map((msg: any) => parseMessage(msg));
+      messages.value.push(...msgs);
+    }
+
+    const convIndex = conversations.value.findIndex(c => c.id === convId);
+    if (convIndex !== -1 && messages.value.length) {
+      conversations.value[convIndex].last_message = messages.value[messages.value.length - 1];
+    }
   } catch (err) {
     console.error(err);
     messages.value = [];
   }
 }
 
-// SCROLL
-function scrollToBottom() {
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+// Chuẩn hóa từng message
+function parseMessage(msg: any) {
+  if (msg.image_url && typeof msg.image_url === 'string') {
+    try {
+      msg.image_url = JSON.parse(msg.image_url);
+    } catch {}
+  }
+  return msg;
+}
+
+// Poll messages
+async function pollMessages() {
+  if (!selectedConversation.value) return;
+
+  try {
+    const res = await apiClient.get(`/conversation/${selectedConversation.value.id}/message?page=1`, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    });
+    const fetchedMessages = res.data.result.data.messages.data || [];
+    const newMsgs = fetchedMessages
+      .map((msg: any) => parseMessage(msg))
+      .filter((m: any) => !messages.value.some(msg => msg.id === m.id));
+
+    if (newMsgs.length) {
+      messages.value.push(...newMsgs);
+      const convIndex = conversations.value.findIndex(c => c.id === selectedConversation.value.id);
+      if (convIndex !== -1) {
+        conversations.value[convIndex].last_message = messages.value[messages.value.length - 1];
+        conversations.value[convIndex].is_read_by_admin = true;
+      }
+    }
+  } catch (err) {
+    console.error(err);
   }
 }
 
-// INPUT RESIZE
+// Handle input
 function handleInput() {
   const el = textareaRef.value;
   if (!el) return;
   el.style.height = 'auto';
   const h = el.scrollHeight;
-  if (h <= MAX_HEIGHT) {
-    el.style.height = h + 'px';
-    el.style.overflowY = 'hidden';
-  } else {
-    el.style.height = MAX_HEIGHT + 'px';
-    el.style.overflowY = 'auto';
-  }
+  el.style.height = h <= MAX_HEIGHT ? h + 'px' : MAX_HEIGHT + 'px';
+  el.style.overflowY = h <= MAX_HEIGHT ? 'hidden' : 'auto';
 }
 
-// SELECT MULTI IMAGES
-function handleSelectImages(e) {
-  const files = Array.from(e.target.files || []);
+// Chọn ảnh
+function handleSelectImages(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const files = Array.from(input.files || []);
   files.forEach(file => {
     selectedImages.value.push(file);
     previewImages.value.push(URL.createObjectURL(file));
   });
-  e.target.value = ''; // reset input
+  if (input) input.value = '';
 }
 
-// REMOVE IMAGE
-function removeImage(index) {
+function removeImage(index: number) {
   selectedImages.value.splice(index, 1);
   previewImages.value.splice(index, 1);
 }
 
-// SEND MESSAGE
-// SEND MESSAGE
+// Gửi tin nhắn
 async function sendMessage() {
   if (!selectedConversation.value) return;
   if (!newMessage.value.trim() && !selectedImages.value.length) return;
 
-  // Tạo FormData để gửi lên server
   const formData = new FormData();
   if (newMessage.value.trim()) formData.append('message', newMessage.value);
+
+  // append nhiều ảnh đúng chuẩn array
   selectedImages.value.forEach(file => formData.append('image[]', file));
 
-  // Tạm lưu tin nhắn mới (nếu API trả về chậm)
+  // Tạo tin nhắn tạm để show UI ngay
   const tempMsg = {
-    id: Date.now(), // ID tạm thời
+    id: Date.now(),
     message: newMessage.value || null,
     image_url: previewImages.value.length ? [...previewImages.value] : null,
     is_admin_sender: true,
@@ -266,46 +322,35 @@ async function sendMessage() {
   };
   messages.value.push(tempMsg);
 
-  // Scroll xuống tin nhắn mới
-  nextTick(() => scrollToBottom());
-
-  // Reset input và preview
   newMessage.value = '';
   selectedImages.value = [];
   previewImages.value = [];
   handleInput();
 
   try {
-    // Gửi lên server
     const res = await apiClient.post(
       `/conversation/${selectedConversation.value.id}/send-message`,
       formData,
-      {
-        headers: {
+      { headers: {
           Authorization: `Bearer ${authStore.token}`,
           'Content-Type': 'multipart/form-data'
-        }
-      }
+      }}
     );
 
-    // Nếu API trả về tin nhắn thực tế, update lại messages
-    const newMsgFromApi = res.data.result?.data;
-    if (newMsgFromApi) {
-      // Thay tin nhắn tạm bằng tin nhắn thật
-      const index = messages.value.findIndex(m => m.id === tempMsg.id);
-      if (index !== -1) messages.value[index] = newMsgFromApi;
-      else messages.value.push(newMsgFromApi);
+    // API trả về mảng messages, push lại vào messages.value
+    if (res.data?.result?.data?.messages?.length) {
+      const newMsgs = res.data.result.data.messages.map((msg: any) => parseMessage(msg));
+      messages.value.push(...newMsgs);
     }
   } catch (err) {
     console.error(err);
-    // Nếu gửi thất bại, xóa tin nhắn tạm hoặc đánh dấu lỗi
     const index = messages.value.findIndex(m => m.id === tempMsg.id);
     if (index !== -1) messages.value.splice(index, 1);
   }
 }
 
 
-// SEARCH
+// Search
 async function searchConversation() {
   if (!searchKeyword.value.trim()) {
     await loadConversations();
@@ -323,21 +368,32 @@ async function searchConversation() {
 
 onMounted(() => {
   loadConversations();
+  pollingInterval = setInterval(pollMessages, 3000);
+});
+
+onUnmounted(() => {
+  if (pollingInterval) clearInterval(pollingInterval);
 });
 </script>
 
 <style scoped>
-.custom-scroll {
-  scrollbar-width: none;
+.custom-scroll::-webkit-scrollbar { display: none; }
+.custom-scroll { scrollbar-width: none; }
+
+.bubble-safe {
+  min-width: 0;
+  max-width: 80%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
+  padding: 0.5rem 0.75rem;
+  border-radius: 1rem;
+  display: inline-block;
 }
-.custom-scroll::-webkit-scrollbar {
-  display: none;
-}
-.custom-scroll {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-}
-.custom-scroll::-webkit-scrollbar {
-  display: none !important;
+.bubble-safe img {
+  max-width: 100%;
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: 0.5rem;
 }
 </style>
