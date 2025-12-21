@@ -11,11 +11,11 @@ const model = ref([
         items: [
             {
                 label: 'Sản phẩm',
-                icon: 'pi pi-fw pi-box',
+                icon: 'pi pi-fw pi-box', // để sản phẩm giữ box
                 items: [
                     {
                         label: 'Danh sách sản phẩm',
-                        icon: 'pi pi-fw pi-box',
+                        icon: 'pi pi-fw pi-list', // đổi thành list
                         to: '/Product/ProductList'
                     },
                     {
@@ -35,11 +35,11 @@ const model = ref([
                 items: [
                     {
                         label: 'Danh sách danh mục',
-                        icon: 'pi pi-fw pi-box',
+                        icon: 'pi pi-fw pi-list', // list danh mục
                         to: '/Category/Categories'
                     },
                     {
-                        label: 'Thêm sản danh mục',
+                        label: 'Thêm danh mục',
                         icon: 'pi pi-fw pi-plus',
                         to: '/Category/Add_Category'
                     }
@@ -51,15 +51,15 @@ const model = ref([
         items: [
             {
                 label: 'Mã giảm giá',
-                icon: 'pi pi-fw pi-tags',
+                icon: 'pi pi-fw pi-ticket', // đổi icon voucher thành ticket
                 items: [
                     {
                         label: 'Danh sách mã giảm giá',
-                        icon: 'pi pi-fw pi-box',
+                        icon: 'pi pi-fw pi-list',
                         to: '/Voucher/List_Voucher'
                     },
                     {
-                        label: 'Thêm sản mã giảm giá',
+                        label: 'Thêm mã giảm giá',
                         icon: 'pi pi-fw pi-plus',
                         to: '/Voucher/Add_Voucher'
                     }
@@ -84,7 +84,7 @@ const model = ref([
                 items: [
                     {
                         label: 'Danh sách bài viết',
-                        icon: 'pi pi-fw pi-file',
+                        icon: 'pi pi-fw pi-file-edit', // file-edit trực quan hơn
                         to: '/Article/List_Article'
                     },
                     {
@@ -104,7 +104,7 @@ const model = ref([
                 items: [
                     {
                         label: 'Danh sách danh mục bài viết',
-                        icon: 'pi pi-fw pi-box',
+                        icon: 'pi pi-fw pi-list', // đổi thành list
                         to: '/Article_Category/List_Article_Category'
                     },
                     {
@@ -124,9 +124,13 @@ const model = ref([
     },
     {
         items: [{ label: 'Khách Hàng', icon: 'pi pi-fw pi-users', to: '/Customers/List_Customer' }]
+    },
+    {
+        items: [{ label: 'Tin nhắn', icon: 'pi pi-fw pi-comments', to: '/Chat/Chats' }] // đổi users → comments
     }
 ]);
 </script>
+
 
 <template>
     <ul class="layout-menu">
