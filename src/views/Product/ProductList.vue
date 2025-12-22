@@ -32,6 +32,11 @@ const showExportDialog = ref(false);
 const selectedProductForAction = ref(null);
 const submitting = ref(false);
 
+// Orders for export
+const orders = ref([]);
+const confirmedOrders = ref([]);
+const loadingOrders = ref(false);
+
 // Import form data
 const importFormData = ref({
     quantity: 1,
@@ -45,7 +50,7 @@ const importFormData = ref({
 const exportFormData = ref({
     quantity: 1,
     export_type: 'sale',
-    reference_id: '',
+    order_code: null,
     note: ''
 });
 
@@ -66,6 +71,7 @@ const exportTypes = ref([
 
 onBeforeMount(async () => {
     await loadProducts();
+    await loadOrders();
 });
 
 // Load sản phẩm
@@ -106,6 +112,26 @@ function formatNumber(val) {
 function formatCurrency(val) {
     if (!val) return '-';
     return Number(val).toLocaleString('vi-VN') + ' ₫';
+}
+
+// Load orders for export
+async function loadOrders() {
+    loadingOrders.value = true;
+    try {
+        const response = await apiClient.get('/order', {
+            headers: { Authorization: `Bearer ${authStore.token}` }
+        });
+        const orderData = response.data?.result?.data?.data || response.data?.result?.data || response.data?.data || [];
+        orders.value = Array.isArray(orderData) ? orderData : [];
+        // Filter only confirmed orders
+        confirmedOrders.value = orders.value.filter((order) => order.order_status === 'confirmed');
+    } catch (err) {
+        console.error('Lỗi tải đơn hàng:', err);
+        orders.value = [];
+        confirmedOrders.value = [];
+    } finally {
+        loadingOrders.value = false;
+    }
 }
 
 // Xóa sản phẩm với toast
@@ -157,7 +183,7 @@ function openExportDialog(product) {
     exportFormData.value = {
         quantity: 1,
         export_type: 'sale',
-        reference_id: '',
+        order_code: null,
         note: ''
     };
     showExportDialog.value = true;
@@ -228,7 +254,7 @@ async function submitExport() {
         };
 
         if (exportFormData.value.export_type) payload.export_type = exportFormData.value.export_type;
-        if (exportFormData.value.reference_id) payload.reference_id = exportFormData.value.reference_id;
+        if (exportFormData.value.order_code) payload.order_code = exportFormData.value.order_code;
         if (exportFormData.value.note) payload.note = exportFormData.value.note;
 
         await apiClient.post('/inventory/export', payload, {
@@ -476,7 +502,26 @@ async function submitExport() {
                 <!-- Reference ID - Only show for sale type -->
                 <div v-if="exportFormData.export_type === 'sale'" class="flex flex-col gap-2">
                     <label class="font-medium">Mã đơn hàng</label>
-                    <InputText v-model="exportFormData.reference_id" placeholder="Nhập mã đơn hàng..." class="w-full" />
+                    <Dropdown
+                        v-model="exportFormData.order_code"
+                        :options="confirmedOrders"
+                        optionLabel="order_code"
+                        optionValue="order_code"
+                        placeholder="Chọn đơn hàng đã xác nhận..."
+                        filter
+                        filterPlaceholder="Tìm mã đơn hàng..."
+                        :loading="loadingOrders"
+                        class="w-full"
+                        showClear
+                    >
+                        <template #option="slotProps">
+                            <div class="flex flex-col">
+                                <span class="font-medium">{{ slotProps.option.order_code }}</span>
+                                <span class="text-sm text-gray-500">{{ formatCurrency(slotProps.option.total_amount) }}</span>
+                            </div>
+                        </template>
+                    </Dropdown>
+                    <small v-if="confirmedOrders.length === 0 && !loadingOrders" class="text-orange-500"> Không có đơn hàng "Đã xác nhận" nào </small>
                 </div>
 
                 <!-- Note -->

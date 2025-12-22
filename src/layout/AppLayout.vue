@@ -1,5 +1,6 @@
 <script setup>
 import { useLayout } from '@/layout/composables/layout';
+import ConfirmDialog from 'primevue/confirmdialog';
 import { computed, ref, watch } from 'vue';
 import AppFooter from './AppFooter.vue';
 import AppSidebar from './AppSidebar.vue';
@@ -68,4 +69,5 @@ function isOutsideClicked(event) {
         <div class="layout-mask animate-fadein"></div>
     </div>
     <Toast />
+    <ConfirmDialog />
 </template>

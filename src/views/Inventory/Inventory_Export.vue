@@ -7,7 +7,6 @@ import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
-import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
@@ -23,6 +22,11 @@ const submitting = ref(false);
 const products = ref([]);
 const selectedProduct = ref(null);
 
+// Orders for export
+const orders = ref([]);
+const confirmedOrders = ref([]);
+const loadingOrders = ref(false);
+
 // List of items to export
 const exportItems = ref([]);
 
@@ -31,7 +35,7 @@ const formData = ref({
     product_id: null,
     quantity: 1,
     export_type: 'sale',
-    reference_id: '',
+    order_code: null,
     note: ''
 });
 
@@ -46,6 +50,7 @@ const exportTypes = ref([
 // Load danh sách sản phẩm
 onBeforeMount(async () => {
     await loadProducts();
+    await loadOrders();
 
     // Nếu có product_id từ query params
     if (route.query.product_id) {
@@ -64,6 +69,24 @@ async function loadProducts() {
         products.value = [];
     } finally {
         loading.value = false;
+    }
+}
+
+// Load orders for export
+async function loadOrders() {
+    loadingOrders.value = true;
+    try {
+        const response = await apiClient.get('/order');
+        const orderData = response.data?.result?.data?.data || response.data?.result?.data || response.data?.data || [];
+        orders.value = Array.isArray(orderData) ? orderData : [];
+        // Filter only confirmed orders
+        confirmedOrders.value = orders.value.filter((order) => order.order_status === 'confirmed');
+    } catch (err) {
+        console.error('Lỗi tải đơn hàng:', err);
+        orders.value = [];
+        confirmedOrders.value = [];
+    } finally {
+        loadingOrders.value = false;
     }
 }
 
@@ -146,7 +169,7 @@ function addToList() {
         current_stock: currentStock,
         quantity: formData.value.quantity,
         export_type: formData.value.export_type,
-        reference_id: formData.value.reference_id,
+        order_code: formData.value.order_code,
         note: formData.value.note
     };
 
@@ -183,7 +206,7 @@ function editItem(index) {
         product_id: item.product_id,
         quantity: item.quantity,
         export_type: item.export_type,
-        reference_id: item.reference_id,
+        order_code: item.order_code,
         note: item.note
     };
     // Remove from list so it can be re-added
@@ -211,7 +234,7 @@ async function submitExport() {
                     quantity: item.quantity
                 };
                 if (item.export_type) exportItem.export_type = item.export_type;
-                if (item.reference_id) exportItem.reference_id = item.reference_id;
+                if (item.order_code) exportItem.order_code = item.order_code;
                 if (item.note) exportItem.note = item.note;
                 return exportItem;
             })
@@ -250,10 +273,16 @@ function resetForm() {
         product_id: null,
         quantity: 1,
         export_type: 'sale',
-        reference_id: '',
+        order_code: null,
         note: ''
     };
     selectedProduct.value = null;
+}
+
+// Format currency
+function formatCurrency(val) {
+    if (!val) return '-';
+    return Number(val).toLocaleString('vi-VN') + ' ₫';
 }
 
 // Clear all items
@@ -352,10 +381,30 @@ const totalQuantity = computed(() => {
                     <Dropdown id="export_type" v-model="formData.export_type" :options="exportTypes" optionLabel="label" optionValue="value" placeholder="Chọn loại" class="w-full" />
                 </div>
 
-                <!-- Mã tham chiếu -->
-                <div class="flex flex-col gap-2">
-                    <label for="reference_id" class="font-medium">Mã tham chiếu</label>
-                    <InputText id="reference_id" v-model="formData.reference_id" placeholder="Nhập mã đơn hàng, phiếu xuất..." class="w-full" />
+                <!-- Mã đơn hàng - Only show for sale type -->
+                <div v-if="formData.export_type === 'sale'" class="flex flex-col gap-2">
+                    <label for="order_code" class="font-medium">Mã đơn hàng</label>
+                    <Dropdown
+                        id="order_code"
+                        v-model="formData.order_code"
+                        :options="confirmedOrders"
+                        optionLabel="order_code"
+                        optionValue="order_code"
+                        placeholder="Chọn đơn hàng đã xác nhận..."
+                        filter
+                        filterPlaceholder="Tìm mã đơn hàng..."
+                        :loading="loadingOrders"
+                        class="w-full"
+                        showClear
+                    >
+                        <template #option="slotProps">
+                            <div class="flex flex-col">
+                                <span class="font-medium">{{ slotProps.option.order_code }}</span>
+                                <span class="text-sm text-gray-500">{{ formatCurrency(slotProps.option.total_amount) }}</span>
+                            </div>
+                        </template>
+                    </Dropdown>
+                    <small v-if="confirmedOrders.length === 0 && !loadingOrders" class="text-orange-500"> Không có đơn hàng "Đã xác nhận" nào </small>
                 </div>
 
                 <!-- Ghi chú -->
@@ -406,9 +455,9 @@ const totalQuantity = computed(() => {
                         {{ getExportTypeLabel(slotProps.data.export_type) }}
                     </template>
                 </Column>
-                <Column field="reference_id" header="Mã tham chiếu" style="width: 150px">
+                <Column field="order_code" header="Mã đơn hàng" style="width: 150px">
                     <template #body="slotProps">
-                        {{ slotProps.data.reference_id || '-' }}
+                        {{ slotProps.data.order_code || '-' }}
                     </template>
                 </Column>
                 <Column header="Thao tác" style="width: 100px">

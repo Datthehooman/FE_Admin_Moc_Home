@@ -1,7 +1,7 @@
 <script setup>
 import { FilterMatchMode } from '@primevue/core/api';
+import Button from 'primevue/button';
 import Column from 'primevue/column';
-import ConfirmPopup from 'primevue/confirmpopup';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import IconField from 'primevue/iconfield';
@@ -114,10 +114,13 @@ function onSort(event) {
     }
 }
 
-const updateOrderStatus = async (order, newStatus, event) => {
+const updateOrderStatus = async (order, newStatus, previousStatus) => {
+    // If same status, do nothing
+    if (newStatus === previousStatus) return;
+
     confirm.require({
-        target: event.currentTarget,
-        message: `Chuyển trạng thái đơn ${order.order_id} sang "${orderStatusLabels[newStatus]}"?`,
+        message: `Chuyển trạng thái đơn ${order.order_code} sang "${orderStatusLabels[newStatus]}"?`,
+        header: 'Xác nhận thay đổi trạng thái',
         icon: 'pi pi-exclamation-triangle',
         rejectProps: {
             label: 'Huỷ',
@@ -144,6 +147,8 @@ const updateOrderStatus = async (order, newStatus, event) => {
                 });
             } catch (err) {
                 console.error('❌ Lỗi cập nhật trạng thái:', err.response?.data || err);
+                // Revert to previous status on error
+                order.order_status = previousStatus;
                 toast.add({
                     severity: 'error',
                     summary: 'Lỗi',
@@ -153,7 +158,8 @@ const updateOrderStatus = async (order, newStatus, event) => {
             }
         },
         reject: () => {
-            // User rejected, do nothing
+            // Revert to previous status on reject
+            order.order_status = previousStatus;
         }
     });
 };
@@ -202,7 +208,6 @@ function getStatusSeverity(status) {
 
 <template>
     <div class="card flex-1">
-        <ConfirmPopup></ConfirmPopup>
         <h2 class="font-semibold text-xl mb-4">Danh Sách Đơn Hàng</h2>
 
         <DataTable
@@ -338,7 +343,7 @@ function getStatusSeverity(status) {
                 <template #body="{ data }">
                     <div class="flex gap-2">
                         <Button icon="pi pi-eye" text severity="info" @click="router.push(`/Order/Detail_Order/${data.order_id}`)" />
-                        <Dropdown :options="orderStatuses" v-model="data.order_status" @change="(e) => updateOrderStatus(data, data.order_status, e)" class="w-full">
+                        <Dropdown :options="orderStatuses" :modelValue="data.order_status" @update:modelValue="(newStatus) => updateOrderStatus(data, newStatus, data.order_status)" class="w-full">
                             <template #value="{ value }">
                                 <span>{{ getStatusLabel(value) }}</span>
                             </template>
