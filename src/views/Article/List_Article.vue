@@ -24,10 +24,6 @@ const articleStatuses = [
     { label: 'Hiển thị', value: 1 },
     { label: 'Ẩn', value: 0 }
 ];
-const mapThumbnail = (thumbnail) => {
-    if (!thumbnail) return null;
-    return `https://api.mocfurni.shop/storage/system/articles/images/${thumbnail}`;
-};
 
 onBeforeMount(() => {
     // Khởi tạo bộ lọc trước khi tải dữ liệu
@@ -50,9 +46,6 @@ async function loadArticles() {
 
         // Chuyển đổi chuỗi ngày thành đối tượng Date để PrimeVue có thể sắp xếp/lọc Date
         articles.value.forEach((article) => {
-            if (article.thumbnail) {
-                article.thumbnail = mapThumbnail(article.thumbnail);
-            }
             if (article.created_at) {
                 // Thêm 'Z' để đảm bảo Date() hiểu đây là UTC/GMT, tránh sai lệch múi giờ
                 article.created_at = new Date(article.created_at.endsWith('Z') ? article.created_at : article.created_at + 'Z');
@@ -162,27 +155,22 @@ async function deleteArticle(article) {
             <Column header="Hình ảnh" style="min-width: 8rem" class="text-center">
                 <template #body="{ data }">
                     <div class="w-16 h-16 mx-auto flex items-center justify-center rounded-lg shadow-md overflow-hidden bg-gray-100">
-                        <img
-                            :src="data.thumbnail || 'https://placehold.co/100x100/94a3b8/ffffff?text=No+Img'"
-                            class="w-full h-full object-cover"
-                            :alt="data.title"
-                            onerror="this.onerror=null;this.src='https://placehold.co/100x100/94a3b8/ffffff?text=No+Img';"
-                        />
+                        <img :src="data.thumbnail" class="w-full h-full object-cover" :alt="data.title" />
                     </div>
                 </template>
             </Column>
 
             <Column field="title" header="Tiêu đề" sortable style="min-width: 20rem">
                 <template #body="{ data }">
-                    <span class="font-medium text-blue-600 hover:text-blue-800 transition-colors cursor-pointer" @click="router.push(`/Article/Edit_Article/${data.id}`)">{{ data.title }}</span>
+                    <span class="font-medium">{{ data.title }}</span>
                 </template>
                 <template #filter="{ filterModel }">
                     <InputText v-model="filterModel.value" type="text" placeholder="Tìm kiếm tiêu đề" />
                 </template>
             </Column>
 
-            <Column field="admin_id" header="Người đăng (ID)" sortable style="min-width: 8rem" class="text-center">
-                <template #body="{ data }">ID: {{ data.admin_id }}</template>
+            <Column field="admin_id" header="Người đăng" sortable style="min-width: 8rem" class="text-center">
+                <template #body="{ data }">{{ data.name }}</template>
                 <template #filter="{ filterModel }">
                     <InputText v-model="filterModel.value" type="text" placeholder="Tìm theo ID" />
                 </template>

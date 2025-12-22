@@ -3,6 +3,8 @@ import { computed, onBeforeMount, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import Button from 'primevue/button';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
@@ -21,7 +23,10 @@ const submitting = ref(false);
 const products = ref([]);
 const selectedProduct = ref(null);
 
-// Form data
+// List of items to export
+const exportItems = ref([]);
+
+// Form data for single item
 const formData = ref({
     product_id: null,
     quantity: 1,
@@ -68,38 +73,163 @@ function onProductChange(event) {
     selectedProduct.value = event.value;
 }
 
-// Số lượng còn lại sau khi xuất
+// Số lượng còn lại sau khi xuất (considering items already in list)
 const remainingStock = computed(() => {
     if (!selectedProduct.value) return 0;
-    return Math.max(0, (parseInt(selectedProduct.value.stock_quantity) || 0) - formData.value.quantity);
+    const currentStock = parseInt(selectedProduct.value.stock_quantity) || 0;
+    // Check if product already in list
+    const existingItem = exportItems.value.find((item) => item.product_id === selectedProduct.value.product_id);
+    const alreadyExporting = existingItem ? existingItem.quantity : 0;
+    return Math.max(0, currentStock - alreadyExporting - formData.value.quantity);
 });
 
-// Submit xuất kho
+// Check if product already in list
+function isProductInList(productId) {
+    return exportItems.value.some((item) => item.product_id === productId);
+}
+
+// Get total export quantity for a product (including what's already in list)
+function getTotalExportForProduct(productId) {
+    return exportItems.value.filter((item) => item.product_id === productId).reduce((sum, item) => sum + item.quantity, 0);
+}
+
+// Add item to export list
+function addToList() {
+    if (!selectedProduct.value) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Cảnh báo',
+            detail: 'Vui lòng chọn sản phẩm',
+            life: 3000
+        });
+        return;
+    }
+
+    if (formData.value.quantity < 1) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Cảnh báo',
+            detail: 'Số lượng phải lớn hơn 0',
+            life: 3000
+        });
+        return;
+    }
+
+    const currentStock = parseInt(selectedProduct.value.stock_quantity) || 0;
+    const alreadyInList = getTotalExportForProduct(selectedProduct.value.product_id);
+
+    if (formData.value.quantity + alreadyInList > currentStock) {
+        toast.add({
+            severity: 'error',
+            summary: 'Lỗi',
+            detail: `Số lượng xuất vượt quá tồn kho. Tồn kho: ${currentStock}, Đã trong danh sách: ${alreadyInList}`,
+            life: 4000
+        });
+        return;
+    }
+
+    // Check if product already exists in list
+    if (isProductInList(selectedProduct.value.product_id)) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Cảnh báo',
+            detail: 'Sản phẩm đã có trong danh sách',
+            life: 3000
+        });
+        return;
+    }
+
+    const item = {
+        product_id: selectedProduct.value.product_id,
+        product_name: selectedProduct.value.product_name,
+        sku: selectedProduct.value.sku,
+        current_stock: currentStock,
+        quantity: formData.value.quantity,
+        export_type: formData.value.export_type,
+        reference_id: formData.value.reference_id,
+        note: formData.value.note
+    };
+
+    exportItems.value.push(item);
+
+    toast.add({
+        severity: 'success',
+        summary: 'Đã thêm',
+        detail: `Đã thêm ${selectedProduct.value.product_name} vào danh sách`,
+        life: 2000
+    });
+
+    // Reset form for next item
+    resetForm();
+}
+
+// Remove item from list
+function removeFromList(index) {
+    const removedItem = exportItems.value[index];
+    exportItems.value.splice(index, 1);
+    toast.add({
+        severity: 'info',
+        summary: 'Đã xóa',
+        detail: `Đã xóa ${removedItem.product_name} khỏi danh sách`,
+        life: 2000
+    });
+}
+
+// Edit item in list - load back to form
+function editItem(index) {
+    const item = exportItems.value[index];
+    selectedProduct.value = products.value.find((p) => p.product_id === item.product_id);
+    formData.value = {
+        product_id: item.product_id,
+        quantity: item.quantity,
+        export_type: item.export_type,
+        reference_id: item.reference_id,
+        note: item.note
+    };
+    // Remove from list so it can be re-added
+    exportItems.value.splice(index, 1);
+}
+
+// Submit all exports
 async function submitExport() {
+    if (exportItems.value.length === 0) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Cảnh báo',
+            detail: 'Vui lòng thêm ít nhất một sản phẩm vào danh sách',
+            life: 3000
+        });
+        return;
+    }
+
     submitting.value = true;
     try {
         const payload = {
-            product_id: selectedProduct.value.product_id,
-            quantity: formData.value.quantity
+            items: exportItems.value.map((item) => {
+                const exportItem = {
+                    product_id: item.product_id,
+                    quantity: item.quantity
+                };
+                if (item.export_type) exportItem.export_type = item.export_type;
+                if (item.reference_id) exportItem.reference_id = item.reference_id;
+                if (item.note) exportItem.note = item.note;
+                return exportItem;
+            })
         };
-
-        // Chỉ gửi các trường có giá trị
-        if (formData.value.export_type) payload.export_type = formData.value.export_type;
-        if (formData.value.reference_id) payload.reference_id = formData.value.reference_id;
-        if (formData.value.note) payload.note = formData.value.note;
 
         await apiClient.post('/inventory/export', payload);
 
         toast.add({
             severity: 'success',
             summary: 'Thành công',
-            detail: `Đã xuất kho ${formData.value.quantity} sản phẩm thành công!`,
+            detail: `Đã xuất kho ${exportItems.value.length} sản phẩm thành công!`,
             life: 3000
         });
 
-        // Reset form
+        // Clear all
+        exportItems.value = [];
         resetForm();
-        // Reload products để cập nhật tồn kho
+        // Reload products to update stock
         await loadProducts();
     } catch (err) {
         console.error('Lỗi xuất kho:', err);
@@ -126,6 +256,12 @@ function resetForm() {
     selectedProduct.value = null;
 }
 
+// Clear all items
+function clearAll() {
+    exportItems.value = [];
+    resetForm();
+}
+
 // Quay lại
 function goBack() {
     router.back();
@@ -135,6 +271,17 @@ function goBack() {
 function formatNumber(val) {
     return Number(val).toLocaleString('vi-VN');
 }
+
+// Get export type label
+function getExportTypeLabel(value) {
+    const type = exportTypes.value.find((t) => t.value === value);
+    return type ? type.label : value;
+}
+
+// Total quantity
+const totalQuantity = computed(() => {
+    return exportItems.value.reduce((sum, item) => sum + item.quantity, 0);
+});
 </script>
 
 <template>
@@ -148,9 +295,12 @@ function formatNumber(val) {
             <Button label="Quay lại" icon="pi pi-arrow-left" severity="secondary" @click="goBack" />
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Chọn sản phẩm -->
-            <div class="flex flex-col gap-2">
+        <!-- Product Selection Form -->
+        <div class="border border-surface-200 dark:border-surface-700 rounded-lg p-4 mb-6">
+            <h3 class="font-semibold mb-4 text-lg">Thêm sản phẩm xuất kho</h3>
+
+            <!-- Product Select - Full Width -->
+            <div class="flex flex-col gap-2 mb-4">
                 <label for="product" class="font-medium">Sản phẩm <span class="text-red-500">*</span></label>
                 <Dropdown id="product" v-model="selectedProduct" :options="products" optionLabel="product_name" placeholder="Chọn sản phẩm" filter filterPlaceholder="Tìm kiếm sản phẩm..." class="w-full" :loading="loading" @change="onProductChange">
                     <template #option="slotProps">
@@ -162,61 +312,127 @@ function formatNumber(val) {
                 </Dropdown>
             </div>
 
-            <!-- Số lượng -->
-            <div class="flex flex-col gap-2">
-                <label for="quantity" class="font-medium">Số lượng xuất <span class="text-red-500">*</span></label>
-                <InputNumber id="quantity" v-model="formData.quantity" :min="1" :max="parseInt(selectedProduct?.stock_quantity) || 9999" placeholder="Nhập số lượng" class="w-full" showButtons />
-                <small v-if="selectedProduct && formData.quantity > (parseInt(selectedProduct.stock_quantity) || 0)" class="text-red-500"> Số lượng xuất vượt quá tồn kho hiện có! </small>
+            <!-- Product Info when selected -->
+            <div v-if="selectedProduct" class="mb-4 p-4 bg-surface-50 dark:bg-surface-800 rounded-lg">
+                <h4 class="font-semibold mb-2 text-sm text-gray-600 dark:text-gray-400">Thông tin sản phẩm:</h4>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                        <span class="text-sm text-gray-500">Tên sản phẩm:</span>
+                        <p class="font-medium">{{ selectedProduct.product_name }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-500">SKU:</span>
+                        <p class="font-medium">{{ selectedProduct.sku || '-' }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-500">Tồn kho hiện tại:</span>
+                        <p class="font-medium">{{ formatNumber(selectedProduct.stock_quantity || 0) }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-500">Sau khi xuất:</span>
+                        <p class="font-medium" :class="remainingStock <= 10 ? 'text-red-600' : 'text-green-600'">
+                            {{ formatNumber(remainingStock) }}
+                        </p>
+                    </div>
+                </div>
             </div>
 
-            <!-- Loại xuất kho -->
-            <div class="flex flex-col gap-2">
-                <label for="export_type" class="font-medium">Loại xuất kho</label>
-                <Dropdown id="export_type" v-model="formData.export_type" :options="exportTypes" optionLabel="label" optionValue="value" placeholder="Chọn loại" class="w-full" />
+            <!-- Other Form Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Số lượng -->
+                <div class="flex flex-col gap-2">
+                    <label for="quantity" class="font-medium">Số lượng xuất <span class="text-red-500">*</span></label>
+                    <InputNumber id="quantity" v-model="formData.quantity" :min="1" :max="parseInt(selectedProduct?.stock_quantity) || 9999" placeholder="Nhập số lượng" class="w-full" showButtons />
+                    <small v-if="selectedProduct && formData.quantity > (parseInt(selectedProduct.stock_quantity) || 0)" class="text-red-500"> Số lượng xuất vượt quá tồn kho hiện có! </small>
+                </div>
+
+                <!-- Loại xuất kho -->
+                <div class="flex flex-col gap-2">
+                    <label for="export_type" class="font-medium">Loại xuất kho</label>
+                    <Dropdown id="export_type" v-model="formData.export_type" :options="exportTypes" optionLabel="label" optionValue="value" placeholder="Chọn loại" class="w-full" />
+                </div>
+
+                <!-- Mã tham chiếu -->
+                <div class="flex flex-col gap-2">
+                    <label for="reference_id" class="font-medium">Mã tham chiếu</label>
+                    <InputText id="reference_id" v-model="formData.reference_id" placeholder="Nhập mã đơn hàng, phiếu xuất..." class="w-full" />
+                </div>
+
+                <!-- Ghi chú -->
+                <div class="flex flex-col gap-2">
+                    <label for="note" class="font-medium">Ghi chú</label>
+                    <Textarea id="note" v-model="formData.note" rows="2" placeholder="Nhập ghi chú (nếu có)" class="w-full" />
+                </div>
             </div>
 
-            <!-- Mã tham chiếu -->
-            <div class="flex flex-col gap-2">
-                <label for="reference_id" class="font-medium">Mã tham chiếu</label>
-                <InputText id="reference_id" v-model="formData.reference_id" placeholder="Nhập mã đơn hàng, phiếu xuất..." class="w-full" />
-            </div>
-
-            <!-- Ghi chú -->
-            <div class="flex flex-col gap-2 md:col-span-2">
-                <label for="note" class="font-medium">Ghi chú</label>
-                <Textarea id="note" v-model="formData.note" rows="3" placeholder="Nhập ghi chú (nếu có)" class="w-full" />
+            <!-- Add Button -->
+            <div class="flex justify-end gap-3 mt-4">
+                <Button label="Làm mới" icon="pi pi-refresh" severity="secondary" @click="resetForm" />
+                <Button label="Thêm vào danh sách" icon="pi pi-plus" severity="success" @click="addToList" :disabled="!selectedProduct" />
             </div>
         </div>
 
-        <!-- Thông tin sản phẩm đã chọn -->
-        <div v-if="selectedProduct" class="mt-6 p-4 bg-surface-50 dark:bg-surface-800 rounded-lg">
-            <h3 class="font-semibold mb-2">Thông tin sản phẩm đã chọn:</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Export Items List -->
+        <div class="border border-surface-200 dark:border-surface-700 rounded-lg p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold text-lg">
+                    Danh sách sản phẩm xuất kho
+                    <span class="text-sm font-normal text-gray-500">({{ exportItems.length }} sản phẩm)</span>
+                </h3>
+                <Button v-if="exportItems.length > 0" label="Xóa tất cả" icon="pi pi-trash" severity="danger" text @click="clearAll" />
+            </div>
+
+            <DataTable :value="exportItems" class="mb-4" stripedRows showGridlines emptyMessage="Chưa có sản phẩm nào trong danh sách">
+                <Column field="product_name" header="Sản phẩm">
+                    <template #body="slotProps">
+                        <div>
+                            <p class="font-medium">{{ slotProps.data.product_name }}</p>
+                            <p class="text-sm text-gray-500">SKU: {{ slotProps.data.sku || '-' }}</p>
+                        </div>
+                    </template>
+                </Column>
+                <Column field="current_stock" header="Tồn hiện tại" style="width: 100px">
+                    <template #body="slotProps">
+                        {{ formatNumber(slotProps.data.current_stock) }}
+                    </template>
+                </Column>
+                <Column field="quantity" header="SL xuất" style="width: 80px">
+                    <template #body="slotProps">
+                        <span class="font-semibold text-red-600">-{{ formatNumber(slotProps.data.quantity) }}</span>
+                    </template>
+                </Column>
+                <Column field="export_type" header="Loại" style="width: 120px">
+                    <template #body="slotProps">
+                        {{ getExportTypeLabel(slotProps.data.export_type) }}
+                    </template>
+                </Column>
+                <Column field="reference_id" header="Mã tham chiếu" style="width: 150px">
+                    <template #body="slotProps">
+                        {{ slotProps.data.reference_id || '-' }}
+                    </template>
+                </Column>
+                <Column header="Thao tác" style="width: 100px">
+                    <template #body="slotProps">
+                        <div class="flex gap-1">
+                            <Button icon="pi pi-pencil" severity="info" text rounded @click="editItem(slotProps.index)" v-tooltip.top="'Sửa'" />
+                            <Button icon="pi pi-trash" severity="danger" text rounded @click="removeFromList(slotProps.index)" v-tooltip.top="'Xóa'" />
+                        </div>
+                    </template>
+                </Column>
+            </DataTable>
+
+            <!-- Summary -->
+            <div v-if="exportItems.length > 0" class="flex justify-between items-center p-4 bg-surface-50 dark:bg-surface-800 rounded-lg mb-4">
                 <div>
-                    <span class="text-sm text-gray-500">Tên sản phẩm:</span>
-                    <p class="font-medium">{{ selectedProduct.product_name }}</p>
-                </div>
-                <div>
-                    <span class="text-sm text-gray-500">SKU:</span>
-                    <p class="font-medium">{{ selectedProduct.sku || '-' }}</p>
-                </div>
-                <div>
-                    <span class="text-sm text-gray-500">Tồn kho hiện tại:</span>
-                    <p class="font-medium">{{ formatNumber(selectedProduct.stock_quantity || 0) }}</p>
-                </div>
-                <div>
-                    <span class="text-sm text-gray-500">Sau khi xuất:</span>
-                    <p class="font-medium" :class="remainingStock <= 10 ? 'text-red-600' : 'text-green-600'">
-                        {{ formatNumber(remainingStock) }}
-                    </p>
+                    <span class="text-sm text-gray-500">Tổng số lượng xuất:</span>
+                    <p class="font-semibold text-lg text-red-600">{{ formatNumber(totalQuantity) }}</p>
                 </div>
             </div>
-        </div>
 
-        <!-- Buttons -->
-        <div class="flex justify-end gap-3 mt-6">
-            <Button label="Làm mới" icon="pi pi-refresh" severity="secondary" @click="resetForm" />
-            <Button label="Xuất kho" icon="pi pi-check" severity="danger" :loading="submitting" @click="submitExport" />
+            <!-- Submit Button -->
+            <div class="flex justify-end">
+                <Button label="Xuất kho" icon="pi pi-check" severity="danger" :loading="submitting" :disabled="exportItems.length === 0" size="large" @click="submitExport" />
+            </div>
         </div>
     </div>
 </template>

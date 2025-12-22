@@ -88,29 +88,25 @@ const model = ref([
                         to: '/Article/List_Article'
                     },
                     {
+                        label: 'Danh Mục Bài Viết',
+                        icon: 'pi pi-fw pi-folder',
+                        items: [
+                            {
+                                label: 'Danh sách danh mục bài viết',
+                                icon: 'pi pi-fw pi-list', // đổi thành list
+                                to: '/Article_Category/List_Article_Category'
+                            },
+                            {
+                                label: 'Thêm danh mục bài viết',
+                                icon: 'pi pi-fw pi-plus',
+                                to: '/Article_Category/Add_Article_Category'
+                            }
+                        ]
+                    },
+                    {
                         label: 'Thêm bài viết',
                         icon: 'pi pi-fw pi-plus',
                         to: '/Article/Add_Article'
-                    }
-                ]
-            }
-        ]
-    },
-    {
-        items: [
-            {
-                label: 'Danh Mục Bài Viết',
-                icon: 'pi pi-fw pi-folder',
-                items: [
-                    {
-                        label: 'Danh sách danh mục bài viết',
-                        icon: 'pi pi-fw pi-list', // đổi thành list
-                        to: '/Article_Category/List_Article_Category'
-                    },
-                    {
-                        label: 'Thêm danh mục bài viết',
-                        icon: 'pi pi-fw pi-plus',
-                        to: '/Article_Category/Add_Article_Category'
                     }
                 ]
             }
@@ -170,9 +166,6 @@ const model = ref([
                 ]
             }
         ]
-    },
-    {
-        items: [{ label: 'Khuyến Mãi', icon: 'pi pi-fw pi-gift', to: '/Promotions/List' }]
     },
     {
         items: [{ label: 'Khách Hàng', icon: 'pi pi-fw pi-users', to: '/Customers/List_Customer' }]
