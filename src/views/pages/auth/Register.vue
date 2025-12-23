@@ -1,8 +1,10 @@
 <script setup>
 import FloatingConfigurator from '@/components/FloatingConfigurator.vue';
 import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
 import { ref } from 'vue';
 
+const toast = useToast();
 const full_name = ref('');
 const email = ref('');
 const password = ref('');
@@ -14,7 +16,12 @@ const loading = ref(false);
 const handleRegister = async () => {
     // Check confirm password
     if (password.value !== password_confirmation.value) {
-        alert('Mật khẩu xác nhận không khớp!');
+        toast.add({
+            severity: 'warn',
+            summary: 'Cảnh báo',
+            detail: 'Mật khẩu xác nhận không khớp!',
+            life: 3000
+        });
         return;
     }
 
@@ -30,7 +37,12 @@ const handleRegister = async () => {
         });
 
         console.log('REGISTER SUCCESS:', response.data);
-        alert(response.data.message || 'Đăng ký thành công!');
+        toast.add({
+            severity: 'success',
+            summary: 'Thành công',
+            detail: response.data.message || 'Đăng ký thành công!',
+            life: 3000
+        });
 
         // Nếu muốn lưu token tự login, có thể dùng:
         // localStorage.setItem("access_token", response.data.data.access_token);
@@ -38,7 +50,12 @@ const handleRegister = async () => {
         window.location.href = '/pages/auth/Register';
     } catch (error) {
         console.error('REGISTER FAILED:', error.response?.data || error);
-        alert(error.response?.data?.message || 'Đăng ký thất bại!');
+        toast.add({
+            severity: 'error',
+            summary: 'Lỗi',
+            detail: error.response?.data?.message || 'Đăng ký thất bại!',
+            life: 3000
+        });
     } finally {
         loading.value = false;
     }

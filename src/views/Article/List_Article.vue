@@ -2,6 +2,7 @@
 import { FilterMatchMode } from '@primevue/core/api';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
+import ConfirmPopup from 'primevue/confirmpopup';
 import DataTable from 'primevue/datatable';
 import DatePicker from 'primevue/datepicker';
 import Dropdown from 'primevue/dropdown';
@@ -9,12 +10,16 @@ import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 import { onBeforeMount, ref } from 'vue';
 
 import apiClient from '@/api/axios';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
+const toast = useToast();
+const confirm = useConfirm();
 
 const articles = ref([]);
 const filters = ref(null);
@@ -96,21 +101,45 @@ function formatDate(date) {
 /**
  * Xóa bài viết
  */
-async function deleteArticle(article) {
-    if (!confirm(`Bạn có chắc muốn xóa bài viết "${article.title}" không?`)) return;
+async function deleteArticle(article, event) {
+    confirm.require({
+        target: event.currentTarget,
+        message: `Bạn có chắc muốn xóa bài viết "${article.title}" không?`,
+        icon: 'pi pi-exclamation-triangle',
+        rejectProps: {
+            label: 'Huỷ',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Xóa',
+            severity: 'danger'
+        },
+        accept: async () => {
+            try {
+                // Cần thay thế bằng endpoint DELETE thực tế nếu có
+                // Giả lập call API DELETE
+                await apiClient.delete(`/articles/${article.id}`);
 
-    try {
-        // Cần thay thế bằng endpoint DELETE thực tế nếu có
-        // Giả lập call API DELETE
-        await apiClient.delete(`/articles/${article.id}`);
-
-        // Xóa khỏi danh sách client-side sau khi xóa thành công trên server
-        articles.value = articles.value.filter((a) => a.id !== article.id);
-        alert('✅ Xóa bài viết thành công!');
-    } catch (err) {
-        console.error('❌ Lỗi xóa bài viết:', err.response?.data || err);
-        alert('❌ Xóa bài viết thất bại!');
-    }
+                // Xóa khỏi danh sách client-side sau khi xóa thành công trên server
+                articles.value = articles.value.filter((a) => a.id !== article.id);
+                toast.add({
+                    severity: 'success',
+                    summary: 'Thành công',
+                    detail: 'Xóa bài viết thành công!',
+                    life: 3000
+                });
+            } catch (err) {
+                console.error('❌ Lỗi xóa bài viết:', err.response?.data || err);
+                toast.add({
+                    severity: 'error',
+                    summary: 'Lỗi',
+                    detail: 'Xóa bài viết thất bại!',
+                    life: 3000
+                });
+            }
+        }
+    });
 }
 </script>
 
@@ -196,11 +225,12 @@ async function deleteArticle(article) {
                 <template #body="{ data }">
                     <div class="flex gap-2 justify-center">
                         <Button icon="pi pi-pencil" label="Sửa" text severity="primary" @click="router.push(`/Article/Edit_Article/${data.id}`)" />
-                        <Button icon="pi pi-trash" label="Xóa" text severity="danger" @click="deleteArticle(data)" />
+                        <Button icon="pi pi-trash" label="Xóa" text severity="danger" @click="deleteArticle(data, $event)" />
                     </div>
                 </template>
             </Column>
         </DataTable>
+        <ConfirmPopup />
     </div>
 </template>
 

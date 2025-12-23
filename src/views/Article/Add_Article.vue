@@ -7,11 +7,13 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import FileUpload from 'primevue/fileupload'; // Giữ import FileUpload nhưng không dùng logic gửi file
 import InputText from 'primevue/inputtext';
+import { useToast } from 'primevue/usetoast';
 import { onBeforeMount, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
 const router = useRouter();
+const toast = useToast();
 
 const categories = ref([]);
 const editorRef = ref(null);
@@ -140,7 +142,12 @@ const onUploadThumbnail = async (event) => {
         console.log('Thumbnail URL:', articleForm.thumbnail);
     } catch (err) {
         console.error('Upload thumbnail lỗi:', err);
-        alert('Upload thumbnail thất bại!');
+        toast.add({
+            severity: 'error',
+            summary: 'Lỗi',
+            detail: 'Upload thumbnail thất bại!',
+            life: 3000
+        });
     }
 };
 
@@ -177,7 +184,12 @@ const submitForm = async () => {
         });
 
         console.log('Thêm bài viết thành công!', response.data);
-        alert('Thêm bài viết thành công!');
+        toast.add({
+            severity: 'success',
+            summary: 'Thành công',
+            detail: 'Thêm bài viết thành công!',
+            life: 3000
+        });
 
         router.push('/Article/List_Article');
 
@@ -186,17 +198,32 @@ const submitForm = async () => {
     } catch (err) {
         if (err.response) {
             console.error('Response data:', err.response.data);
-            alert('Thêm bài viết thất bại: ' + JSON.stringify(err.response.data));
+            toast.add({
+                severity: 'error',
+                summary: 'Lỗi',
+                detail: 'Thêm bài viết thất bại: ' + JSON.stringify(err.response.data),
+                life: 5000
+            });
 
             // Xử lý và hiển thị chi tiết lỗi Validation
             if (err.response.data?.errors) {
                 const errorMessages = Object.values(err.response.data.errors).flat().join(', ');
                 console.log('Lỗi Validation chi tiết từ Server:', errorMessages);
-                alert('Lỗi Validation chi tiết từ Server: ' + errorMessages);
+                toast.add({
+                    severity: 'warn',
+                    summary: 'Lỗi Validation',
+                    detail: errorMessages,
+                    life: 5000
+                });
             }
         } else {
             console.error(err);
-            alert('Thêm bài viết thất bại!');
+            toast.add({
+                severity: 'error',
+                summary: 'Lỗi',
+                detail: 'Thêm bài viết thất bại!',
+                life: 3000
+            });
         }
     } finally {
         loading.value = false;

@@ -4,6 +4,7 @@ import Card from 'primevue/card';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
+import { useToast } from 'primevue/usetoast';
 import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -11,6 +12,7 @@ import { useRouter } from 'vue-router';
 import apiClient from '@/api/axios';
 
 const router = useRouter();
+const toast = useToast();
 
 // Dữ liệu form
 const categoryForm = reactive({
@@ -56,7 +58,12 @@ const isFormValid = computed(() => {
 // Hàm gửi form
 const handleSubmit = async () => {
     if (!isFormValid.value) {
-        alert('Vui lòng điền đầy đủ Tên và Slug.');
+        toast.add({
+            severity: 'warn',
+            summary: 'Cảnh báo',
+            detail: 'Vui lòng điền đầy đủ Tên và Slug.',
+            life: 3000
+        });
         return;
     }
 
@@ -65,12 +72,22 @@ const handleSubmit = async () => {
         // ENDPOINT: POST /article-categories
         await apiClient.post('/article-categories', categoryForm);
 
-        alert('✅ Thêm danh mục bài viết thành công!');
+        toast.add({
+            severity: 'success',
+            summary: 'Thành công',
+            detail: 'Thêm danh mục bài viết thành công!',
+            life: 3000
+        });
         router.push('/Article_Category/List_Article_Category');
     } catch (err) {
         console.error('❌ Lỗi thêm danh mục bài viết:', err.response?.data || err);
         const errorMessage = err.response?.data?.message || 'Không thể thêm danh mục.';
-        alert(`❌ ${errorMessage}`);
+        toast.add({
+            severity: 'error',
+            summary: 'Lỗi',
+            detail: errorMessage,
+            life: 3000
+        });
     } finally {
         loading.value = false;
     }

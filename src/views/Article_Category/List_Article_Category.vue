@@ -2,18 +2,23 @@
 import { FilterMatchMode } from '@primevue/core/api';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
+import ConfirmPopup from 'primevue/confirmpopup';
 import DataTable from 'primevue/datatable';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 import { onBeforeMount, ref } from 'vue';
 
 import apiClient from '@/api/axios';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
+const toast = useToast();
+const confirm = useConfirm();
 
 const categories = ref([]);
 const filters = ref(null);
@@ -55,59 +60,113 @@ async function loadCategories() {
 }
 
 // Hàm cập nhật trạng thái
-const updateCategoryStatus = async (category, newStatus) => {
+const updateCategoryStatus = async (category, newStatus, event) => {
     // Ép kiểu newStatus thành số
     newStatus = Number(newStatus);
     const statusLabel = categoryStatuses.find((s) => s.value === newStatus)?.label || 'Không xác định';
-    if (!confirm(`Chuyển trạng thái danh mục ${category.name} sang "${statusLabel}"?`)) {
-        // Nếu hủy, khôi phục lại trạng thái cũ
-        await loadCategories();
-        return;
-    }
 
-    try {
-        // 🎉 FIX LỖI: Gửi TOÀN BỘ dữ liệu danh mục hiện tại (bao gồm name, slug, desc,...)
-        // Sau đó ghi đè trường status bằng giá trị mới.
-        await apiClient.put(`/article-categories/${category.id}`, {
-            ...category,
-            status: newStatus
-        });
+    confirm.require({
+        target: event?.currentTarget,
+        message: `Chuyển trạng thái danh mục ${category.name} sang "${statusLabel}"?`,
+        icon: 'pi pi-exclamation-triangle',
+        rejectProps: {
+            label: 'Huỷ',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Xác nhận',
+            severity: 'primary'
+        },
+        accept: async () => {
+            try {
+                // 🎉 FIX LỖI: Gửi TOÀN BỘ dữ liệu danh mục hiện tại (bao gồm name, slug, desc,...)
+                // Sau đó ghi đè trường status bằng giá trị mới.
+                await apiClient.put(`/article-categories/${category.id}`, {
+                    ...category,
+                    status: newStatus
+                });
 
-        // Cập nhật trạng thái trên giao diện sau khi gọi API thành công
-        category.status = newStatus;
-        alert('✅ Cập nhật trạng thái thành công!');
-    } catch (err) {
-        // Phục hồi lại trạng thái cũ nếu lỗi
-        console.error('❌ Lỗi cập nhật trạng thái:', err.response?.data || err);
-        alert('❌ Không thể cập nhật trạng thái! Vui lòng kiểm tra console.');
-        await loadCategories(); // Tải lại danh sách để đảm bảo dữ liệu đúng
-    }
+                // Cập nhật trạng thái trên giao diện sau khi gọi API thành công
+                category.status = newStatus;
+                toast.add({
+                    severity: 'success',
+                    summary: 'Thành công',
+                    detail: 'Cập nhật trạng thái thành công!',
+                    life: 3000
+                });
+            } catch (err) {
+                // Phục hồi lại trạng thái cũ nếu lỗi
+                console.error('❌ Lỗi cập nhật trạng thái:', err.response?.data || err);
+                toast.add({
+                    severity: 'error',
+                    summary: 'Lỗi',
+                    detail: 'Không thể cập nhật trạng thái! Vui lòng kiểm tra console.',
+                    life: 3000
+                });
+                await loadCategories(); // Tải lại danh sách để đảm bảo dữ liệu đúng
+            }
+        },
+        reject: async () => {
+            // Nếu hủy, khôi phục lại trạng thái cũ
+            await loadCategories();
+        }
+    });
 };
 
 /**
  * Xóa danh mục
  */
-async function deleteCategory(category) {
-    if (!confirm(`Bạn có chắc muốn xóa danh mục "${category.name}" không? Thao tác này không thể hoàn tác.`)) return;
+async function deleteCategory(category, event) {
+    confirm.require({
+        target: event.currentTarget,
+        message: `Bạn có chắc muốn xóa danh mục "${category.name}" không? Thao tác này không thể hoàn tác.`,
+        icon: 'pi pi-exclamation-triangle',
+        rejectProps: {
+            label: 'Huỷ',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Xóa',
+            severity: 'danger'
+        },
+        accept: async () => {
+            try {
+                // Gọi API DELETE tới endpoint /article-categories/{id}
+                await apiClient.delete(`/article-categories/${category.id}`);
 
-    try {
-        // Gọi API DELETE tới endpoint /article-categories/{id}
-        await apiClient.delete(`/article-categories/${category.id}`);
+                // Xóa danh mục khỏi danh sách trên giao diện
+                categories.value = categories.value.filter((c) => c.id !== category.id);
+                toast.add({
+                    severity: 'success',
+                    summary: 'Thành công',
+                    detail: 'Xóa danh mục thành công!',
+                    life: 3000
+                });
+            } catch (err) {
+                console.error('❌ Lỗi xóa danh mục:', err.response?.data || err);
 
-        // Xóa danh mục khỏi danh sách trên giao diện
-        categories.value = categories.value.filter((c) => c.id !== category.id);
-        alert('✅ Xóa danh mục thành công!');
-    } catch (err) {
-        console.error('❌ Lỗi xóa danh mục:', err.response?.data || err);
-
-        // --- BẮT LỖI 409 CỤ THỂ ---
-        if (err.response && err.response.status === 409) {
-            alert(`❌ KHÔNG THỂ XÓA DANH MỤC! \n\nDanh mục "${category.name}" hiện đang chứa bài viết. \n\nVui lòng xóa hết các bài viết thuộc danh mục này trước khi thực hiện xóa danh mục.`);
-        } else {
-            alert('❌ Xóa danh mục thất bại! Vui lòng kiểm tra quyền hoặc kết nối.');
+                // --- BẮT LỖI 409 CỤ THỂ ---
+                if (err.response && err.response.status === 409) {
+                    toast.add({
+                        severity: 'error',
+                        summary: 'Không thể xóa',
+                        detail: `Danh mục "${category.name}" hiện đang chứa bài viết. Vui lòng xóa hết các bài viết thuộc danh mục này trước.`,
+                        life: 5000
+                    });
+                } else {
+                    toast.add({
+                        severity: 'error',
+                        summary: 'Lỗi',
+                        detail: 'Xóa danh mục thất bại! Vui lòng kiểm tra quyền hoặc kết nối.',
+                        life: 3000
+                    });
+                }
+                // -----------------------------
+            }
         }
-        // -----------------------------
-    }
+    });
 }
 
 // Khởi tạo bộ lọc (Không đổi)
@@ -252,9 +311,9 @@ function navigateToEdit(id) {
                 <template #body="{ data }">
                     <div class="flex gap-2 items-center">
                         <Button icon="pi pi-pencil" text severity="warning" @click="navigateToEdit(data.id)" />
-                        <Button icon="pi pi-trash" text severity="danger" @click="deleteCategory(data)" />
+                        <Button icon="pi pi-trash" text severity="danger" @click="deleteCategory(data, $event)" />
 
-                        <Select :options="categoryStatuses" optionLabel="label" optionValue="value" v-model="data.status" @change="updateCategoryStatus(data, data.status)" class="w-full">
+                        <Select :options="categoryStatuses" optionLabel="label" optionValue="value" v-model="data.status" @change="updateCategoryStatus(data, data.status, $event)" class="w-full">
                             <template #value="{ value }">
                                 <span>{{ getStatusLabel(value) }}</span>
                             </template>
@@ -266,6 +325,7 @@ function navigateToEdit(id) {
                 </template>
             </Column>
         </DataTable>
+        <ConfirmPopup />
     </div>
 </template>
 

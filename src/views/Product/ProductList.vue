@@ -5,6 +5,7 @@ import { onBeforeMount, ref } from 'vue';
 
 import Button from 'primevue/button';
 import Column from 'primevue/column';
+import ConfirmPopup from 'primevue/confirmpopup';
 import DataTable from 'primevue/datatable';
 import Dialog from 'primevue/dialog';
 import Dropdown from 'primevue/dropdown';
@@ -12,6 +13,7 @@ import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import MultiSelect from 'primevue/multiselect';
 import Tag from 'primevue/tag';
+import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 
 import { useAuthStore } from '@/stores/auth';
@@ -19,6 +21,7 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 
 const toast = useToast();
+const confirm = useConfirm();
 const products = ref([]);
 const filters = ref(null);
 const loading = ref(true);
@@ -132,33 +135,47 @@ async function loadOrders() {
 }
 
 // Xóa sản phẩm với toast
-async function deleteProduct(product) {
-    if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${product.product_name}" không?`)) return;
+async function deleteProduct(product, event) {
+    confirm.require({
+        target: event.currentTarget,
+        message: `Bạn có chắc muốn xóa sản phẩm "${product.product_name}" không?`,
+        icon: 'pi pi-exclamation-triangle',
+        rejectProps: {
+            label: 'Huỷ',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Xóa',
+            severity: 'danger'
+        },
+        accept: async () => {
+            try {
+                await apiClient.delete(`/products/${product.product_id}`, {
+                    headers: { Authorization: `Bearer ${authStore.token}` }
+                });
 
-    try {
-        await apiClient.delete(`/products/${product.product_id}`, {
-            headers: { Authorization: `Bearer ${authStore.token}` }
-        });
+                products.value = products.value.filter((p) => p.product_id !== product.product_id);
 
-        products.value = products.value.filter((p) => p.product_id !== product.product_id);
-
-        // Thông báo success
-        toast.add({
-            severity: 'success',
-            summary: 'Thành công',
-            detail: `Xóa sản phẩm "${product.product_name}" thành công!`,
-            life: 3000
-        });
-    } catch (err) {
-        console.error('Lỗi xóa sản phẩm:', err.response || err);
-        // Thông báo error
-        toast.add({
-            severity: 'error',
-            summary: 'Lỗi',
-            detail: `Xóa sản phẩm "${product.product_name}" thất bại!`,
-            life: 3000
-        });
-    }
+                // Thông báo success
+                toast.add({
+                    severity: 'success',
+                    summary: 'Thành công',
+                    detail: `Xóa sản phẩm "${product.product_name}" thành công!`,
+                    life: 3000
+                });
+            } catch (err) {
+                console.error('Lỗi xóa sản phẩm:', err.response || err);
+                // Thông báo error
+                toast.add({
+                    severity: 'error',
+                    summary: 'Lỗi',
+                    detail: `Xóa sản phẩm "${product.product_name}" thất bại!`,
+                    life: 3000
+                });
+            }
+        }
+    });
 }
 
 // Open Import Dialog
@@ -395,11 +412,13 @@ async function submitExport() {
                         <!-- Xuất kho -->
                         <Button icon="pi pi-upload" text severity="warning" v-tooltip.top="'Xuất kho'" @click="openExportDialog(data)" />
                         <!-- Xóa -->
-                        <Button icon="pi pi-trash" text severity="danger" v-tooltip.top="'Xóa'" @click="deleteProduct(data)" />
+                        <Button icon="pi pi-trash" text severity="danger" v-tooltip.top="'Xóa'" @click="deleteProduct(data, $event)" />
                     </div>
                 </template>
             </Column>
         </DataTable>
+
+        <ConfirmPopup />
 
         <!-- Import Dialog -->
         <Dialog v-model:visible="showImportDialog" modal header="Nhập Kho" :style="{ width: '500px' }">
