@@ -77,7 +77,7 @@ async function loadOrders() {
     loading.value = true;
     try {
         const response = await apiClient.get('/order');
-        orders.value = response.data?.result?.data?.data || [];
+        orders.value = response.data?.result?.data || [];
         // Convert date strings to Date objects
         orders.value.forEach((order) => {
             if (order.order_date) {
