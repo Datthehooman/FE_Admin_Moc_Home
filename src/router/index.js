@@ -157,6 +157,11 @@ const router = createRouter({
                     component: () => import('@/views/Inventory/Inventory_History.vue')
                 },
                 {
+                    path: 'Inventory/History/:id',
+                    name: 'Detail_Inventory_History',
+                    component: () => import('@/views/Inventory/Detail_Inventory_History.vue')
+                },
+                {
                     path: 'Inventory/Import',
                     name: 'Inventory_Import',
                     component: () => import('@/views/Inventory/Inventory_Import.vue')

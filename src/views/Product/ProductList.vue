@@ -12,7 +12,6 @@ import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import MultiSelect from 'primevue/multiselect';
 import Tag from 'primevue/tag';
-import Textarea from 'primevue/textarea';
 import { useToast } from 'primevue/usetoast';
 
 import { useAuthStore } from '@/stores/auth';
@@ -42,16 +41,14 @@ const importFormData = ref({
     quantity: 1,
     import_price: null,
     supplier_name: '',
-    import_type: 'purchase',
-    note: ''
+    import_type: 'purchase'
 });
 
 // Export form data
 const exportFormData = ref({
     quantity: 1,
     export_type: 'sale',
-    order_code: null,
-    note: ''
+    order_code: null
 });
 
 const importTypes = ref([
@@ -171,8 +168,7 @@ function openImportDialog(product) {
         quantity: 1,
         import_price: null,
         supplier_name: '',
-        import_type: 'purchase',
-        note: ''
+        import_type: 'purchase'
     };
     showImportDialog.value = true;
 }
@@ -183,8 +179,7 @@ function openExportDialog(product) {
     exportFormData.value = {
         quantity: 1,
         export_type: 'sale',
-        order_code: null,
-        note: ''
+        order_code: null
     };
     showExportDialog.value = true;
 }
@@ -203,7 +198,6 @@ async function submitImport() {
         if (importFormData.value.import_price) payload.import_price = importFormData.value.import_price;
         if (importFormData.value.supplier_name) payload.supplier_name = importFormData.value.supplier_name;
         if (importFormData.value.import_type) payload.import_type = importFormData.value.import_type;
-        if (importFormData.value.note) payload.note = importFormData.value.note;
 
         await apiClient.post('/inventory/import', payload, {
             headers: { Authorization: `Bearer ${authStore.token}` }
@@ -255,7 +249,6 @@ async function submitExport() {
 
         if (exportFormData.value.export_type) payload.export_type = exportFormData.value.export_type;
         if (exportFormData.value.order_code) payload.order_code = exportFormData.value.order_code;
-        if (exportFormData.value.note) payload.note = exportFormData.value.note;
 
         await apiClient.post('/inventory/export', payload, {
             headers: { Authorization: `Bearer ${authStore.token}` }
@@ -449,12 +442,6 @@ async function submitExport() {
                     <Dropdown v-model="importFormData.import_type" :options="importTypes" optionLabel="label" optionValue="value" class="w-full" />
                 </div>
 
-                <!-- Note -->
-                <div class="flex flex-col gap-2">
-                    <label class="font-medium">Ghi chú</label>
-                    <Textarea v-model="importFormData.note" rows="2" placeholder="Nhập ghi chú (nếu có)" class="w-full" />
-                </div>
-
                 <!-- After import preview -->
                 <div class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                     <p class="text-sm">
@@ -522,12 +509,6 @@ async function submitExport() {
                         </template>
                     </Dropdown>
                     <small v-if="confirmedOrders.length === 0 && !loadingOrders" class="text-orange-500"> Không có đơn hàng "Đã xác nhận" nào </small>
-                </div>
-
-                <!-- Note -->
-                <div class="flex flex-col gap-2">
-                    <label class="font-medium">Ghi chú</label>
-                    <Textarea v-model="exportFormData.note" rows="2" placeholder="Nhập ghi chú (nếu có)" class="w-full" />
                 </div>
 
                 <!-- After export preview -->

@@ -7,7 +7,6 @@ import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
-import Textarea from 'primevue/textarea';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 
@@ -35,8 +34,7 @@ const formData = ref({
     product_id: null,
     quantity: 1,
     export_type: 'sale',
-    order_code: null,
-    note: ''
+    order_code: null
 });
 
 const exportTypes = ref([
@@ -169,8 +167,7 @@ function addToList() {
         current_stock: currentStock,
         quantity: formData.value.quantity,
         export_type: formData.value.export_type,
-        order_code: formData.value.order_code,
-        note: formData.value.note
+        order_code: formData.value.order_code
     };
 
     exportItems.value.push(item);
@@ -206,8 +203,7 @@ function editItem(index) {
         product_id: item.product_id,
         quantity: item.quantity,
         export_type: item.export_type,
-        order_code: item.order_code,
-        note: item.note
+        order_code: item.order_code
     };
     // Remove from list so it can be re-added
     exportItems.value.splice(index, 1);
@@ -235,7 +231,6 @@ async function submitExport() {
                 };
                 if (item.export_type) exportItem.export_type = item.export_type;
                 if (item.order_code) exportItem.order_code = item.order_code;
-                if (item.note) exportItem.note = item.note;
                 return exportItem;
             })
         };
@@ -273,8 +268,7 @@ function resetForm() {
         product_id: null,
         quantity: 1,
         export_type: 'sale',
-        order_code: null,
-        note: ''
+        order_code: null
     };
     selectedProduct.value = null;
 }
@@ -405,12 +399,6 @@ const totalQuantity = computed(() => {
                         </template>
                     </Dropdown>
                     <small v-if="confirmedOrders.length === 0 && !loadingOrders" class="text-orange-500"> Không có đơn hàng "Đã xác nhận" nào </small>
-                </div>
-
-                <!-- Ghi chú -->
-                <div class="flex flex-col gap-2">
-                    <label for="note" class="font-medium">Ghi chú</label>
-                    <Textarea id="note" v-model="formData.note" rows="2" placeholder="Nhập ghi chú (nếu có)" class="w-full" />
                 </div>
             </div>
 

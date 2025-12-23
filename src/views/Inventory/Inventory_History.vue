@@ -1,6 +1,7 @@
 <script setup>
 import { FilterMatchMode } from '@primevue/core/api';
 import { onBeforeMount, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import Button from 'primevue/button';
 import Calendar from 'primevue/calendar';
@@ -11,6 +12,8 @@ import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
 
 import apiClient from '@/api/axios';
+
+const router = useRouter();
 
 const transactions = ref([]);
 const filters = ref(null);
@@ -119,6 +122,11 @@ function clearFilters() {
     toDate.value = null;
     loadTransactions();
 }
+
+// Xem chi tiết giao dịch
+function viewDetail(id) {
+    router.push({ name: 'Detail_Inventory_History', params: { id } });
+}
 </script>
 
 <template>
@@ -160,7 +168,7 @@ function clearFilters() {
             dataKey="id"
             v-model:filters="filters"
             :loading="loading"
-            :globalFilterFields="['product_name', 'type', 'note']"
+            :globalFilterFields="['product_name', 'type']"
             showGridlines
             scrollable
             scrollHeight="500px"
@@ -220,9 +228,13 @@ function clearFilters() {
                 <template #body="{ data }">{{ data.created_by || '-' }}</template>
             </Column>
 
-            <!-- Ghi chú -->
-            <Column field="note" header="Ghi chú" sortable>
-                <template #body="{ data }">{{ data.note || '-' }}</template>
+            <!-- Hành động -->
+            <Column header="Hành động" style="width: 100px" frozen alignFrozen="right">
+                <template #body="{ data }">
+                    <div class="flex gap-2 justify-center">
+                        <Button icon="pi pi-eye" severity="info" text rounded @click="viewDetail(data.id)" v-tooltip.top="'Xem chi tiết'" />
+                    </div>
+                </template>
             </Column>
         </DataTable>
     </div>

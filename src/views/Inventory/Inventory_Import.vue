@@ -8,7 +8,6 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 
@@ -32,8 +31,7 @@ const formData = ref({
     quantity: 1,
     import_price: null,
     supplier_name: '',
-    import_type: 'purchase',
-    note: ''
+    import_type: 'purchase'
 });
 
 const importTypes = ref([
@@ -119,8 +117,7 @@ function addToList() {
         quantity: formData.value.quantity,
         import_price: formData.value.import_price,
         supplier_name: formData.value.supplier_name,
-        import_type: formData.value.import_type,
-        note: formData.value.note
+        import_type: formData.value.import_type
     };
 
     importItems.value.push(item);
@@ -157,8 +154,7 @@ function editItem(index) {
         quantity: item.quantity,
         import_price: item.import_price,
         supplier_name: item.supplier_name,
-        import_type: item.import_type,
-        note: item.note
+        import_type: item.import_type
     };
     // Remove from list so it can be re-added
     importItems.value.splice(index, 1);
@@ -187,7 +183,6 @@ async function submitImport() {
                 if (item.import_price) importItem.import_price = item.import_price;
                 if (item.supplier_name) importItem.supplier_name = item.supplier_name;
                 if (item.import_type) importItem.import_type = item.import_type;
-                if (item.note) importItem.note = item.note;
                 return importItem;
             })
         };
@@ -226,8 +221,7 @@ function resetForm() {
         quantity: 1,
         import_price: null,
         supplier_name: '',
-        import_type: 'purchase',
-        note: ''
+        import_type: 'purchase'
     };
     selectedProduct.value = null;
 }
@@ -348,12 +342,6 @@ const totalValue = computed(() => {
                 <div class="flex flex-col gap-2">
                     <label for="import_type" class="font-medium">Loại nhập kho</label>
                     <Dropdown id="import_type" v-model="formData.import_type" :options="importTypes" optionLabel="label" optionValue="value" placeholder="Chọn loại" class="w-full" />
-                </div>
-
-                <!-- Ghi chú -->
-                <div class="flex flex-col gap-2 md:col-span-2">
-                    <label for="note" class="font-medium">Ghi chú</label>
-                    <Textarea id="note" v-model="formData.note" rows="2" placeholder="Nhập ghi chú (nếu có)" class="w-full" />
                 </div>
             </div>
 
